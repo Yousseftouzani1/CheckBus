@@ -30,3 +30,6 @@ logs/
 *.project
 *.classpath
 .settings/
+
+#environment files
+.env
