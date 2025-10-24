@@ -7,8 +7,8 @@ PAID("paid ticked"),
 VALIDATED("validated ticket(used or scanned)"),
 EXPIRED("no more usefull"),
 CANCELLED("cancelled ticket"),
+FREE("free seat not yet occupied"),
 CHANGED("user modified the seat or smth like that ");
-
 private final  String description ; 
 
 private TicketStatus(String description ){

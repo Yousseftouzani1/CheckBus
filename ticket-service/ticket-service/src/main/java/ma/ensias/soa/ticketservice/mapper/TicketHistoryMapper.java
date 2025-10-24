@@ -21,6 +21,7 @@ public class TicketHistoryMapper {
                 .build();
     }
 
+    
     public TicketHistoryDTO toDto(TicketHistory entity) {
         if (entity == null) return null;
 

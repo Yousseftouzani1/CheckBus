@@ -7,7 +7,8 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
+import ma.ensias.soa.ticketservice.enums.PaymentStatus;
+ 
 @Getter
 @Setter
 @NoArgsConstructor
@@ -22,6 +23,6 @@ public class PaymentInfoDTO {
     private Timestamp confirmedAt;
     private Timestamp lastUpdate;
     private Long ticketId;
-    private String status;
+    private PaymentStatus status;
 }
 

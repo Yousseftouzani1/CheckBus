@@ -19,11 +19,10 @@ import ma.ensias.soa.ticketservice.enums.TicketStatus;
 public class TicketHistoryDTO {
 
     private Long id;
-        private Long ticketId;             
+    private Long ticketId;             
     private TicketStatus previousStatus;
     private TicketStatus newStatus;
     private Timestamp changedAt;
     private String changedBy;
-    private String description;
 }
 
