@@ -22,7 +22,7 @@ return PaymentInfo.builder()
 
     
 }
- 
+
 // entity -----> response
 
 public PaymentInfoDTO toDto(PaymentInfo entity) {

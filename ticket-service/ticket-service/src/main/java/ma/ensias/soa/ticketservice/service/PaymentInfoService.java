@@ -1,6 +1,8 @@
 package ma.ensias.soa.ticketservice.service;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,7 +14,7 @@ import ma.ensias.soa.ticketservice.entity.PaymentInfo;
 import ma.ensias.soa.ticketservice.enums.PaymentStatus;
 import ma.ensias.soa.ticketservice.mapper.PaymentInfoMapper;
 import ma.ensias.soa.ticketservice.repository.PaymentInfoRepository;
-
+ 
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -47,6 +49,30 @@ public PaymentInfoDTO registerPayment(PaymentEventDTO paymentEventDTO) {
         // 3️⃣ Return DTO
         return paymentInfoMapper.toDto(savedPayment);
     }
+
+
+public List<PaymentInfoDTO> getPaymentsByTicket(Long ticketId) {
+    List<PaymentInfo> list= repository.findByTicketsId( ticketId);
+    List<PaymentInfoDTO> output=new ArrayList<>();
+    for(PaymentInfo x : list){
+        output.add(paymentInfoMapper.toDto(x));
+    }
+    return output;
+
+}
+public List<PaymentInfoDTO> getSuccessfulPayments() {
+    // 1️⃣ Get all successful payment entities
+    List<PaymentInfo> successfulPayments = repository.findByStatus(PaymentStatus.SUCCESS);
+
+    // 2️⃣ Convert them to DTOs
+    List<PaymentInfoDTO> dtoList = new ArrayList<>();
+    for (PaymentInfo payment : successfulPayments) {
+        dtoList.add(paymentInfoMapper.toDto(payment));
+    }
+
+    // 3️⃣ Return the DTO list
+    return dtoList;
+}
 
 /*
 Store metadata	Include previousStatus, newStatus, changedBy, changedAt.

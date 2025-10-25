@@ -1,6 +1,8 @@
 package ma.ensias.soa.ticketservice.service;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Service;
@@ -29,6 +31,23 @@ public class TicketService {
         this.TicketMapper=TicketMapper;
         this.ticketHistoryService= ticketHistoryService;
     }
+
+    
+public List<TicketResponseDTO> getTicketsByUserId(Long userId) {
+    List<Ticket> tickets = repo.findByUserId(userId);
+    List<TicketResponseDTO> ticketDtos = new ArrayList<>();
+
+    for (Ticket ticket : tickets) {
+        ticketDtos.add(TicketMapper.toDto(ticket));
+    }
+
+    return ticketDtos;
+}
+
+
+
+
+
 /*
  * Reserve a seat for 15 minutes
  */
