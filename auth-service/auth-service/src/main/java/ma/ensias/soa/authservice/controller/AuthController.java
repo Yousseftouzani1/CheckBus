@@ -37,7 +37,7 @@ public class AuthController {
     }
 
     @GetMapping("/verify")
-    public ResponseEntity<AuthResponse> verifyUser(@CookieValue(name = "jwt", required = false) String token) {
+    public ResponseEntity<AuthResponse> verifyUser(@CookieValue(name = "token", required = false) String token) {
         if (token == null || token.isEmpty()) {
             throw new UnauthorizedException("No token found. Please log in.");
         }
@@ -70,7 +70,7 @@ public class AuthController {
 
 
     @PostMapping("/verify-token")
-    public ResponseEntity<?> verifyEmailToken (@Valid @RequestParam VerifyTokenRequest request) {
+    public ResponseEntity<?> verifyEmailToken (@Valid @RequestBody VerifyTokenRequest request) {
         authService.VerifyEmailToken(request.getToken());
         ApiResponse response = new ApiResponse( "Token verified successfully.");
         return ResponseEntity.ok(response);
