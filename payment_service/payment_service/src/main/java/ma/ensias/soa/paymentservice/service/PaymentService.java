@@ -70,7 +70,7 @@ public class PaymentService {
                 payment.getStatus(),
                 new Timestamp(System.currentTimeMillis())
         );
-       // PaymentEventProducer.sendPaymentEvent(event);                    //    kafka 
+        eventProducer.sendPaymentEvent(event);                    //    kafka 
 
         // 6. Return response
         return new PaymentResponseDTO(
