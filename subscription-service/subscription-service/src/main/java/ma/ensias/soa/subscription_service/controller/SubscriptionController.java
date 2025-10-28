@@ -9,9 +9,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+
 
 @RestController
-@RequestMapping("/subscriptions")
+@RequestMapping("/api/subscriptions")
 @RequiredArgsConstructor
 public class SubscriptionController {
 
@@ -29,4 +32,17 @@ public class SubscriptionController {
     public ResponseEntity<List<Subscription>> getByUser(@PathVariable Long userId) {
         return ResponseEntity.ok(service.getUserSubscriptions(userId));
     }
+
+    @PostMapping("/cancel-auto")
+    public ResponseEntity<Subscription> cancelAutoRenew(@RequestBody long id) {
+        Subscription sub = service.cancelAutoRenew(id);
+        return ResponseEntity.ok(sub);
+    }
+    
+    @PostMapping("/cancel-subscription")
+    public ResponseEntity<Subscription> cacelSubscription(@RequestBody long id) {
+        Subscription sub = service.cancelSubscription(id);
+        return ResponseEntity.ok(sub);
+    }
+    
 }

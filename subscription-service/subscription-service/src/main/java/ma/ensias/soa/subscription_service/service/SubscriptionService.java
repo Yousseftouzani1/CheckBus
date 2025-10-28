@@ -55,7 +55,7 @@ public class SubscriptionService {
 
         PaymentResponseDTO paymentResponse = paymentClient.processPayment(paymentRequest);
 
-        if ( paymentResponse.getStatus() == Status.SUCCESS) {
+        if ( paymentResponse.getStatus() == PaymentStatus.SUCCESS) {
             saved.setStatus(SubscriptionStatus.ACTIVE);
             repository.save(saved);
 
@@ -77,5 +77,19 @@ public class SubscriptionService {
 
     public List<Subscription> getUserSubscriptions(Long userId) {
         return repository.findAllByUserId(userId);
+    }
+
+    public void cancelAutoRenew(Long id) {
+        Subscription sub = repository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Subscription not found with ID:" + id));
+        
+        sub.setAutoRenew(false);
+        repository.save(sub);    
+        
+    }
+
+    public void cancelSubscription(Subscription subscription) {
+        subscription.setStatus(SubscriptionStatus.CANCELED);
+        repository.save(subscription);
     }
 }

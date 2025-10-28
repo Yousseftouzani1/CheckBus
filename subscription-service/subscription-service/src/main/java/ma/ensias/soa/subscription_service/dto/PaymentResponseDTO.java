@@ -1,6 +1,6 @@
 package ma.ensias.soa.subscription_service.dto;
 
-import ma.ensias.soa.subscription_service.Enums.Status;
+import ma.ensias.soa.subscription_service.Enums.PaymentStatus;
 
 import lombok.*;
 
@@ -9,6 +9,8 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class PaymentResponseDTO {
-    private Status status; 
-    private String transactionId;
+    private String paymentReference;
+    private PaymentStatus status;
+    private String message;
+
 }

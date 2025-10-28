@@ -19,7 +19,7 @@ public class PaymentClient {
     private String paymentServiceUrl;
 
     public PaymentResponseDTO processPayment(PaymentRequestDTO request) {
-        String url = paymentServiceUrl + "/payments/charge";
+        String url = paymentServiceUrl ;
         ResponseEntity<PaymentResponseDTO> response =
                 restTemplate.postForEntity(url, request, PaymentResponseDTO.class);
         return response.getBody();
