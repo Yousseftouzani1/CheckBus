@@ -20,7 +20,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import ma.ensias.soa.ticketservice.enums.PaymentStatus;
- 
+
 @Entity
 @Table(name = "payment_info")
 @Getter
@@ -33,8 +33,8 @@ public class PaymentInfo {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "payment_id")
-    private long id;
-// 1.....1
+    private Long id;
+// n.....1
 @ManyToOne
 @JoinColumn(
     name = "ticket_id",
@@ -44,7 +44,7 @@ public class PaymentInfo {
 )
 private Ticket ticket;
 
- 
+
     @Column(name = "payment_reference", nullable = false, unique = true, length = 300)
     private String paymentReference;
 

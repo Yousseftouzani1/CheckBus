@@ -13,6 +13,10 @@ public class PaymentEventProducer {
 
     public void sendPaymentEvent(PaymentEventDTO event) {
         kafkaTemplate.send("payment-status-topic", event);
-        System.out.println("📢 Sent PaymentEventDTO to Kafka: " + event);
+        System.out.println(" Sent PaymentEventDTO to Kafka: " + event);
     }
+    
+    public void sendSubscriptionPaymentEvent(PaymentEventDTO event) {
+        kafkaTemplate.send("subscription-payment-topic", event);
+    }  
 }

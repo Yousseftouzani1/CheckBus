@@ -16,7 +16,7 @@ import ma.ensias.soa.ticketservice.enums.PaymentStatus;
 @Data
 // request dto
 public class PaymentEventDTO {
- 
+
     private Long ticketId;
     private String paymentReference;
     private Double amount;

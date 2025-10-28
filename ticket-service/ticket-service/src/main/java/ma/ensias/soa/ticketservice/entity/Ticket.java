@@ -33,7 +33,7 @@ public class Ticket {
 @GeneratedValue(strategy=GenerationType.IDENTITY)
 @Id
 @Column(name="ticket_id")
-private long id;
+private Long id;
 
 // User Id assocated with the ticket 
 @Column(name="userId")
@@ -41,7 +41,7 @@ private long userId;
 
 // The trip id associated for this ticket 
 @Column(name="tripId")
-private long tripId;
+private Long tripId;
 
 
 // The number of the seat 
@@ -71,6 +71,6 @@ private String qr_code;
 private Timestamp reservation_Time;
 
 @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, orphanRemoval = true)
-private List<PaymentInfo> payments = new ArrayList<>();
+private List<PaymentInfo> payments;
 
 }
