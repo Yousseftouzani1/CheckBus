@@ -1,0 +1,22 @@
+server:
+  port: 8085
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/payment_db
+    username: postgres
+    password: postgres
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+stripe:
+  secretKey: ${STRIPE_SECRET_KEY} 
+  currency: usd
+
+kafka:
+  bootstrap-servers: localhost:9092
+  topic:
+    payment: payment-topic
+
