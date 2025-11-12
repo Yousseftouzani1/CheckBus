@@ -15,7 +15,7 @@ public class TicketExpirationConsumer {
 
     private final TicketRepository ticketRepository;
 
-    @KafkaListener(topics = "ticket-expiration-topic", groupId = "ticket-expiration-group")
+    @KafkaListener(topics = "ticket-expiration-topic", groupId = "ticket-expiration-group",containerFactory = "expirationKafkaListenerContainerFactory")
     public void handleExpirationEvent(TicketExpirationEvent event) {
         System.out.println("Processing expiration event for ticket: " + event.getTicketId());
 
