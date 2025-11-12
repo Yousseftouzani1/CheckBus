@@ -14,6 +14,7 @@ import ma.ensias.soa.ticketservice.dto.RefundRequestDTO;
 import ma.ensias.soa.ticketservice.dto.TicketExpirationEvent;
 import ma.ensias.soa.ticketservice.dto.TicketRequestDTO;
 import ma.ensias.soa.ticketservice.dto.TicketResponseDTO;
+import ma.ensias.soa.ticketservice.dto.TrajetDTO;
 import ma.ensias.soa.ticketservice.entity.Ticket;
 import ma.ensias.soa.ticketservice.enums.PaymentStatus;
 import ma.ensias.soa.ticketservice.enums.TicketStatus;
@@ -26,18 +27,20 @@ import ma.ensias.soa.ticketservice.kafka.TicketExpirationProducer;
 import ma.ensias.soa.ticketservice.mapper.TicketMapper;
 import ma.ensias.soa.ticketservice.repository.TicketRepository;
 import ma.ensias.soa.ticketservice.util.PaymentClient;
+import ma.ensias.soa.ticketservice.util.TrajetClient;
 
 @Service
 public class TicketService {
-
+        private final TrajetClient trajetClient;
         private final TicketRepository repo;
         private final TicketMapper TicketMapper;
         private final TicketHistoryService ticketHistoryService ;
         private final PaymentClient paymentClient;
         private  RefundProducer refundProducer;
         private  TicketExpirationProducer ticketExpirationProducer;
-public TicketService(TicketRepository repo,TicketMapper TicketMapper,TicketHistoryService ticketHistoryService,PaymentClient paymentClient,RefundProducer refundProducer,TicketExpirationProducer ticketExpirationProducer){
+public TicketService(TicketRepository repo,TicketMapper TicketMapper,TicketHistoryService ticketHistoryService,PaymentClient paymentClient,RefundProducer refundProducer,TicketExpirationProducer ticketExpirationProducer,TrajetClient trajetClient){
         this.repo=repo;
+        this.trajetClient= trajetClient;
         this.TicketMapper=TicketMapper;
         this.ticketHistoryService= ticketHistoryService;
         this.paymentClient=paymentClient;
@@ -68,7 +71,11 @@ public TicketResponseDTO reserveTicket(TicketRequestDTO ticketRequest) {
         ticketRequest.getTripId(),
         ticketRequest.getSeatcode()
     );
-
+     //  Validate trajet via REST
+        TrajetDTO trajet = trajetClient.getTrajetById(ticketRequest.getTripId());
+        if (trajet == null || !trajet.isActive()) {
+            throw new IllegalStateException("Invalid or inactive trajet");
+        }
     // 2. Verify seat availability       // or call trajet service 
     if (existing != null &&
         (existing.getStatus() == TicketStatus.RESERVED ||
