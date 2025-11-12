@@ -79,17 +79,24 @@ public class SubscriptionService {
         return repository.findAllByUserId(userId);
     }
 
-    public void cancelAutoRenew(Long id) {
+    public Subscription cancelAutoRenew(Long id) {
         Subscription sub = repository.findById(id)
             .orElseThrow(() -> new RuntimeException("Subscription not found with ID:" + id));
         
         sub.setAutoRenew(false);
-        repository.save(sub);    
+        repository.save(sub); 
+        
+        return sub;
         
     }
 
-    public void cancelSubscription(Subscription subscription) {
-        subscription.setStatus(SubscriptionStatus.CANCELED);
-        repository.save(subscription);
+    public Subscription cancelSubscription(long id) {
+        Subscription sub = repository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Subscription not found with ID:" + id));
+
+        sub.setStatus(SubscriptionStatus.CANCELED);
+        repository.save(sub);
+        
+        return sub;
     }
 }
