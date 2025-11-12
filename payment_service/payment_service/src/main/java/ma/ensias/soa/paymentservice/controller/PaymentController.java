@@ -3,8 +3,9 @@ package ma.ensias.soa.paymentservice.controller;
 
 import lombok.RequiredArgsConstructor;
 import ma.ensias.soa.paymentservice.dto.PaymentRequestDTO;
+import ma.ensias.soa.paymentservice.dto.PaymentRequestSubDTO;
 import ma.ensias.soa.paymentservice.dto.PaymentResponseDTO;
-import ma.ensias.soa.paymentservice.entity.Payment;
+import ma.ensias.soa.paymentservice.dto.RefundRequestDTO;
 import ma.ensias.soa.paymentservice.enums.PaymentStatus;
 import ma.ensias.soa.paymentservice.service.PaymentService;
 
@@ -14,7 +15,6 @@ import org.springframework.web.bind.annotation.*;
 
 import com.stripe.exception.StripeException;
 
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/payments")
@@ -25,7 +25,7 @@ public class PaymentController {
 
     /**
      *  Initiate a new payment for a ticket
-     * Called by frontend or TicketService
+     *  Called by frontend or TicketService
      */
     @PostMapping("/process")
     public ResponseEntity<PaymentResponseDTO> process(@RequestBody PaymentRequestDTO request) {
@@ -37,36 +37,27 @@ public class PaymentController {
                     .body(new PaymentResponseDTO(null, PaymentStatus.FAILED, e.getMessage()));
         }
     }
+    
+
     /**
-     * Get all payments (optional admin route)
+     *  Trigger a refund 
+     * called by the ticket service or front end 
      */
-    @GetMapping
-    public ResponseEntity<List<Payment>> getAllPayments() {
-        return ResponseEntity.ok(paymentService.getAllPayments());
+    @PostMapping("/refund")
+    public ResponseEntity<PaymentResponseDTO> refundPayment(@RequestBody RefundRequestDTO reference) {
+        PaymentResponseDTO response = paymentService.processRefund(reference);
+        return ResponseEntity.ok(response);
     }
 
     /**
-     * Get all payments for a specific ticket
+     * 
+        Triggers the payement of the subscription 
+        called by the subscription service or frontend 
      */
-    @GetMapping("/ticket/{ticketId}")
-    public ResponseEntity<List<Payment>> getPaymentsByTicket(@PathVariable Long ticketId) {
-        return ResponseEntity.ok(paymentService.getPaymentsByTicket(ticketId));
-    }
 
-    /**
-     *  Check payment status by reference
-     */
-    @GetMapping("/status/{reference}")
-    public ResponseEntity<Payment> getPaymentByReference(@PathVariable String reference) {
-        return ResponseEntity.ok(paymentService.getPaymentByReference(reference));
-    }
-
-    /**
-     *  Trigger a refund (optional)
-     */
-    @PostMapping("/refund/{reference}")
-    public ResponseEntity<PaymentResponseDTO> refundPayment(@PathVariable String reference) {
-        PaymentResponseDTO response = paymentService.refundPayment(reference);
+    @PostMapping("/subscribe")
+    public ResponseEntity<PaymentResponseDTO> processSub(@RequestBody PaymentRequestSubDTO subscription) throws StripeException{
+        PaymentResponseDTO response = paymentService.processPayment(subscription);
         return ResponseEntity.ok(response);
     }
 }

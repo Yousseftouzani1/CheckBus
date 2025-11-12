@@ -33,7 +33,7 @@ public class PaymentInfo {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "payment_id")
-    private long id;
+    private Long id;
 // n.....1
 @ManyToOne
 @JoinColumn(

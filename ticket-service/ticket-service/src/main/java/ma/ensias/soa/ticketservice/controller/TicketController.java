@@ -10,10 +10,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
-import ma.ensias.soa.ticketservice.dto.PaymentEventDTO;
 import ma.ensias.soa.ticketservice.dto.TicketRequestDTO;
 import ma.ensias.soa.ticketservice.dto.TicketResponseDTO;
 import ma.ensias.soa.ticketservice.service.TicketService;
@@ -29,10 +29,13 @@ public class TicketController {
     public ResponseEntity<TicketResponseDTO> reserveTicket(@RequestBody TicketRequestDTO ticketRequest){
     return ResponseEntity.ok(ticketService.reserveTicket(ticketRequest));
     }
-@PostMapping("/buy/{ticketId}")
-    public ResponseEntity<TicketResponseDTO> BuyTicket(@PathVariable Long ticketId,@RequestBody PaymentEventDTO dto){
-    return ResponseEntity.ok(ticketService.buyTicket(ticketId, dto));
-    }
+@PostMapping("/{ticketId}/buy")
+public ResponseEntity<TicketResponseDTO> buyTicket(
+        @PathVariable Long ticketId,
+        @RequestParam(defaultValue = "CARD") String method) {
+    return ResponseEntity.ok(ticketService.buyTicket(ticketId, method));
+}
+
 @PutMapping("/{ticketId}/change")
     public ResponseEntity<TicketResponseDTO> changeTicket(@PathVariable Long ticketId, @RequestBody TicketRequestDTO updateDto) {
         return ResponseEntity.ok(ticketService.changeTicket(ticketId, updateDto));

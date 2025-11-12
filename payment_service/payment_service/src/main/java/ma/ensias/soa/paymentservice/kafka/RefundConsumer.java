@@ -12,10 +12,9 @@ public class RefundConsumer {
 
     private final PaymentService paymentService;
 
-    @KafkaListener(topics = "refund-request-topic", groupId = "payment-service-group")
+    @KafkaListener(topics = "refund-request-topic", groupId = "payment-service-group",containerFactory = "refundKafkaListenerContainerFactory")
     public void consumeRefundRequest(RefundRequestDTO refundRequest) {
         System.out.println(" Received refund request: " + refundRequest);
         paymentService.processRefund(refundRequest);
     }
 }
- 

@@ -9,5 +9,4 @@ import ma.ensias.soa.ticketservice.entity.TicketHistory;
 
 public interface TicketHistoryRepository extends JpaRepository<TicketHistory,Long>{
 List<TicketHistory> findByTicket(Ticket ticket);
-TicketHistory findById(long id);
 } 

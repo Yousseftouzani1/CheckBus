@@ -22,11 +22,11 @@ import ma.ensias.soa.ticketservice.repository.TicketRepository;
 @Transactional
 public class TicketHistoryService {
 
-    private final TicketHistoryRepository historyRepository;
-    private final TicketRepository ticketRepository;
-    private final TicketHistoryMapper historyMapper;
+        private final TicketHistoryRepository historyRepository;
+        private final TicketRepository ticketRepository;
+        private final TicketHistoryMapper historyMapper;
 
-    /**
+        /**
      * Log a ticket status change (RESERVED → PAID, PAID → CANCELLED, etc.)
      *
      * @param ticketId        The ticket that will be changed 
@@ -35,7 +35,7 @@ public class TicketHistoryService {
      * @param changedBy       Who changed this  (USER, SYSTEM, PAYMENT_SERVICE)
      * @return TickethistoryDto 
      */
-    public TicketHistoryDTO logChange(Long ticketId, TicketStatus previousStatus, TicketStatus newStatus, String changedBy) {
+        public TicketHistoryDTO logChange(Long ticketId, TicketStatus previousStatus, TicketStatus newStatus, String changedBy) {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new TicketNotFoundException(ticketId));
 
@@ -58,7 +58,7 @@ public class TicketHistoryService {
      * @param ticketId The ticket Id
      * @return List of TicketHistoryDTO
      */
-    public List<TicketHistoryDTO> getHistoryByTicketId(Long ticketId) {
+        public List<TicketHistoryDTO> getHistoryByTicketId(Long ticketId) {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new TicketNotFoundException(ticketId));
 
@@ -66,20 +66,19 @@ public class TicketHistoryService {
         return histories.stream()
                         .map(historyMapper::toDto)
                         .collect(Collectors.toList());
-    }
+        }
 
-    /**
+        /**
      *  Archive all history entries for a ticket (mark as archived).
-     *
      * @param ticketId The ticket ID
      */
-    public void archiveHistory(Long ticketId) {
+        public void archiveHistory(Long ticketId) {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new TicketNotFoundException(ticketId));
 
         List<TicketHistory> histories = historyRepository.findByTicket(ticket);
         histories.forEach(h -> h.setArchived(true));
         historyRepository.saveAll(histories);
-    }
+        }
 }
 

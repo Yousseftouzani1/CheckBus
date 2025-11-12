@@ -33,7 +33,7 @@ public class TicketHistory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "history_id")
-    private long id;
+    private Long id;
  
    // 1....N
     @ManyToOne

@@ -20,4 +20,5 @@ public class PaymentEventDTO {
     private Double amount;
     private PaymentStatus status;
     private Timestamp confirmedAt;
+    private Long subscriptionId;     
 }
