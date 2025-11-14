@@ -2,7 +2,8 @@ package ma.ensias.soa.ticketservice.dto;
 
 
 import lombok.*;
-
+@Getter
+@Setter
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

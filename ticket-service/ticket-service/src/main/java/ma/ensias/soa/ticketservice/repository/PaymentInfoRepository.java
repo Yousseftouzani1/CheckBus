@@ -11,7 +11,7 @@ import ma.ensias.soa.ticketservice.enums.PaymentStatus;
 public interface PaymentInfoRepository extends JpaRepository<PaymentInfo,Long>{
         List<PaymentInfo> findByTicket(Ticket tic);
         PaymentInfo findById(long id);
-        List<PaymentInfo> findByTicketsId(Long ticket_id);
+        List<PaymentInfo> findByTicketId(Long ticket_id);
         List<PaymentInfo> findByStatus(PaymentStatus status);
 
 }

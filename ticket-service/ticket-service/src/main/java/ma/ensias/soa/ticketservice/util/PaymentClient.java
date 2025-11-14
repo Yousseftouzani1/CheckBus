@@ -16,7 +16,7 @@ public class PaymentClient {
     // payement process of a ticket 
     public PaymentResponseDTO processPayment(PaymentRequestDTO request) {
         // The URL of  PaymentService TO CHANGE FOR DOCKER et kubernetes par la suite 
-        String url = "http://localhost:8082/api/payments/process";
+        String url = "http://payment-service:8085/api/payments/process";
         // Send POST request to PaymentService
         try {
             return restTemplate.postForObject(url, request, PaymentResponseDTO.class);

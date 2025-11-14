@@ -6,6 +6,8 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Getter
+@Setter
 public class RefundRequestDTO {
     private Long ticketId;
     private Double amount;

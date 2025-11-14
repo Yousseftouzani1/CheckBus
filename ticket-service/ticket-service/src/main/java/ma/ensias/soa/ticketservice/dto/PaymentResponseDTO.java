@@ -7,6 +7,8 @@ import ma.ensias.soa.ticketservice.enums.PaymentStatus;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Getter
+@Setter
 public class PaymentResponseDTO {
     private String paymentReference;
     private PaymentStatus status;

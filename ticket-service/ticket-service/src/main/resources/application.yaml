@@ -1,9 +1,12 @@
 server:
-  port: 8085
+  port: 8081
 
 spring:
+  application:
+    name: ticket-service
+
   datasource:
-    url: jdbc:postgresql://payment-db:5432/payment_db
+    url: jdbc:postgresql://ticket-db:5432/ticket_db
     username: postgres
     password: postgres
     driver-class-name: org.postgresql.Driver
@@ -19,7 +22,7 @@ spring:
   kafka:
     bootstrap-servers: kafka:9092
     consumer:
-      group-id: payment-service-group
+      group-id: ticket-service-group
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
@@ -31,6 +34,13 @@ spring:
     listener:
       missing-topics-fatal: false
 
-stripe:
-  secretKey: ${STRIPE_SECRET_KEY:sk_test_12345}
-  currency: usd
+payment:
+  service:
+    # internal DNS name for the Payment Service container
+    url: http://payment-service:8085/api/payments/process
+
+logging:
+  level:
+    root: INFO
+    org.springframework.kafka: INFO
+    org.hibernate.SQL: DEBUG

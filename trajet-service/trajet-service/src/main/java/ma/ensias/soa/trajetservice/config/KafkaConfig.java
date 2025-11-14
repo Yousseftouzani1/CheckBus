@@ -18,7 +18,7 @@ import java.util.Map;
 @Configuration
 public class KafkaConfig {
 
-    // 1️⃣ Define the Kafka producer configuration
+    // Define the Kafka producer configuration
     @Bean
     public ProducerFactory<String, TrajetEventDTO> producerFactory() {
         Map<String, Object> config = new HashMap<>();
@@ -28,13 +28,13 @@ public class KafkaConfig {
         return new DefaultKafkaProducerFactory<>(config);
     }
 
-    // 2️⃣ Define the KafkaTemplate used to send messages
+    // Define the KafkaTemplate used to send messages
     @Bean
     public KafkaTemplate<String, TrajetEventDTO> kafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());
     }
 
-    // 3️⃣ Define the Kafka topic for trajet updates/cancellations
+    // Define the Kafka topic for trajet updates/cancellations
     @Bean
     public NewTopic trajetStatusTopic() {
         return TopicBuilder.name("trajet-status-topic")
