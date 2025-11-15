@@ -52,7 +52,7 @@ public PaymentInfoDTO registerPayment(PaymentEventDTO paymentEventDTO) {
 
 
 public List<PaymentInfoDTO> getPaymentsByTicket(Long ticketId) {
-    List<PaymentInfo> list= repository.findByTicketsId( ticketId);
+List<PaymentInfo> list = repository.findByTicket_Id(ticketId);
     List<PaymentInfoDTO> output=new ArrayList<>();
     for(PaymentInfo x : list){
         output.add(paymentInfoMapper.toDto(x));
