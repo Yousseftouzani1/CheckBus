@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import ma.ensias.soa.ticketservice.entity.PaymentInfo;
 import ma.ensias.soa.ticketservice.entity.Ticket;
 import ma.ensias.soa.ticketservice.enums.PaymentStatus;
-
+import org.springframework.stereotype.Repository; 
 
 @Repository
 public interface PaymentInfoRepository extends JpaRepository<PaymentInfo, Long> {

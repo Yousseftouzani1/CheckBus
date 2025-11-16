@@ -15,6 +15,7 @@
     <groupId>ma.ensias.soa</groupId>
     <artifactId>ticket-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
+    <packaging>jar</packaging>
     <name>TicketService</name>
     <description>Microservice de gestion des tickets</description>
 
@@ -48,11 +49,7 @@
             <artifactId>spring-kafka</artifactId>
         </dependency>
 
-        <!-- Security (optional, you can remove if unused) -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-security</artifactId>
-        </dependency>
+
 
         <!-- Lombok -->
         <dependency>

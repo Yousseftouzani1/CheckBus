@@ -23,10 +23,7 @@ public class PaymentInfoService {
 private PaymentInfoRepository repository;
 private PaymentInfoMapper paymentInfoMapper;
 
-public PaymentInfoService(PaymentInfoRepository repository,PaymentInfoMapper paymentInfoMapper){
-    this.repository=repository;
-    this.paymentInfoMapper =paymentInfoMapper;
-}
+
 
 
 // register payement data for audit 

@@ -11,7 +11,7 @@
 	<groupId>ma.ensias.soa</groupId>
 	<artifactId>payment_service</artifactId>
 	<version>3.3.4</version>
-	<packaging>war</packaging>
+	<packaging>jar</packaging>
 	<name>payment_service</name>
 	<description>Microservice for managing ticket payments</description>
 	<url/>
