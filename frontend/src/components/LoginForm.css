@@ -1,0 +1,143 @@
+/* Background wrapper */
+.login-wrapper {
+  height: 100vh;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background: linear-gradient(135deg, #4a90e2, #9013fe);
+  background-size: cover;
+  background-position: center;
+
+  position: relative;
+}
+
+/* OPTIONAL: Background image slot */
+.login-wrapper {
+  /* Uncomment this and add your image later */
+  /* background-image: url("../assets/mybackground.jpg"); */
+}
+
+/* Dark overlay for readability */
+.background-overlay {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: rgba(10, 10, 10, 0.25);
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+/* Login Card */
+.login-card {
+  position: relative;
+  background: #ffffff;
+  padding: 40px 45px;
+  border-radius: 18px;
+
+  width: 380px;
+
+  box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.18);
+
+  animation: fadeIn 0.6s ease;
+  z-index: 2;
+}
+
+.login-card h2 {
+  margin: 0;
+  font-size: 26px;
+  text-align: center;
+  font-weight: 700;
+  color: #333;
+}
+
+.subtitle {
+  text-align: center;
+  color: #777;
+  margin-bottom: 25px;
+  font-size: 14px;
+}
+
+/* Input Groups */
+.input-group {
+  margin-bottom: 20px;
+}
+
+.input-group label {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 6px;
+  color: #444;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  font-size: 15px;
+  transition: 0.2s;
+}
+
+.input-group input:focus {
+  border-color: #6d54ff;
+  box-shadow: 0 0 4px rgba(109, 84, 255, 0.4);
+}
+
+/* Login button */
+.login-btn {
+  width: 100%;
+  padding: 14px;
+  margin-top: 5px;
+
+  background: linear-gradient(135deg, #007bff, #00c6ff);
+  border: none;
+  border-radius: 10px;
+
+  font-size: 16px;
+  color: white;
+  font-weight: 600;
+
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.login-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 122, 255, 0.35);
+  opacity: 0.95;
+}
+
+/* Error message */
+.error {
+  color: #e63946;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+/* Footer text */
+.footer-text {
+  margin-top: 12px;
+  text-align: center;
+  font-size: 14px;
+  color: #777;
+  cursor: pointer;
+}
+
+.footer-text:hover {
+  text-decoration: underline;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
