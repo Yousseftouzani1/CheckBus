@@ -102,8 +102,9 @@ services:
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      STRIPE_SECRET_KEY: sk_test_12345
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_CURRENCY: ${STRIPE_CURRENCY}
     restart: always
 
   # ====== TICKET DATABASE ======
@@ -136,7 +137,7 @@ services:
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
       PAYMENT_SERVICE_URL: http://payment-service:8085/api/payments/process
     restart: always
 
@@ -169,7 +170,7 @@ services:
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
     restart: always
 
 # ====== NAMED VOLUMES ======

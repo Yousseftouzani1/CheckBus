@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Bus, Mail, Lock, ArrowRight, MapPin } from 'lucide-react';
 
-export default function LoginForm() {
+export default function LoginForm({ onLogin }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -14,6 +14,7 @@ export default function LoginForm() {
       setIsLoading(false);
       console.log('Login attempted with:', { email, password });
     }, 1500);
+    onLogin({ email });
   };
 
   const handleKeyPress = (e) => {

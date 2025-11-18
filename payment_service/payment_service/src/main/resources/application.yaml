@@ -35,7 +35,7 @@ spring:
       missing-topics-fatal: false
 
 stripe:
-  secretKey: ${STRIPE_SECRET_KEY:sk_test_12345}
+  secretKey: ${STRIPE_SECRET_KEY}
   currency: usd
 
 logging:

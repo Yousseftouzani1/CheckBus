@@ -1,6 +1,8 @@
 package ma.ensias.soa.trajetservice.config;
 
-import ma.ensias.soa.trajetservice.dto.TrajetEventDTO;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -12,8 +14,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 
-import java.util.HashMap;
-import java.util.Map;
+import ma.ensias.soa.trajetservice.dto.TrajetEventDTO;
 
 @Configuration
 public class KafkaConfig {
@@ -22,7 +23,7 @@ public class KafkaConfig {
     @Bean
     public ProducerFactory<String, TrajetEventDTO> producerFactory() {
         Map<String, Object> config = new HashMap<>();
-        config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092"); // Kafka broker
+        config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "kafka:29092"); // Kafka broker
         config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
         return new DefaultKafkaProducerFactory<>(config);

@@ -1,30 +1,35 @@
 import React, { useState } from "react";
-import LoginForm from "./components/LoginForm";
-import "./App.css";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
+import LoginForm from "./components/LoginForm";
+import Menu from "./pages/Menu";
+import BuyTicket from "./pages/BuyTicket";
+import Payment from "./pages/Payment";
+import ReserveSeat from "./pages/ReserveSeat";
+import Subscriptions from "./pages/Subscriptions";
 function App() {
   const [user, setUser] = useState(null);
 
-  if (!user) {
-    return <LoginForm onLogin={setUser} />;
-  }
-
   return (
-    <div className="App">
-      <h1>Welcome, {user.email}</h1>
-      <p>You are logged in.</p>
+    <BrowserRouter>
+      <Routes>
+        {!user && (
+          <Route path="/" element={<LoginForm onLogin={setUser} />} />
+        )}
 
-      <button
-        onClick={() => {
-          localStorage.removeItem("token");
-          setUser(null);
-        }}
-      >
-        Logout
-      </button>
-    </div>
+        {user && (
+          <>
+            <Route path="/" element={<Menu />} />
+            <Route path="/buy-ticket" element={<BuyTicket />} />
+            <Route path="/payment" element={<Payment />} />
+            <Route path="/reserve-seat/:busId" element={<ReserveSeat />} />
+            <Route path="/subscriptions" element={<Subscriptions />} />
+
+          </>
+        )}
+      </Routes>
+    </BrowserRouter>
   );
 }
 
 export default App;
-
