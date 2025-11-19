@@ -232,6 +232,50 @@ services:
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
     restart: always
 
+  # =========== AUTH DATABASE ===========
+  auth-db:
+    image: postgres:15
+    container_name: auth-db
+    environment:
+      POSTGRES_DB: auth_db              # Database name
+      POSTGRES_USER: postgres           # DB username
+      POSTGRES_PASSWORD: postgres       # DB password
+    volumes:
+      - auth_data:/var/lib/postgresql/data
+    restart: always
+
+  # =========== AUTH SERVICE ===========
+  auth-service:
+    build:
+      context: ./auth-service/auth-service             # Folder containing your Spring project
+      dockerfile: Dockerfile              # Dockerfile inside auth-service
+    container_name: auth-service
+    depends_on:
+      - auth-db
+    ports:
+      - "8084:8084"                       # Expose Auth Service on port 8084
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://auth-db:5432/auth_db   # Updated DB URL for Docker
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+
+      JWT_SECRET: ${JWT_SECRET}
+      MAIL_ADDR: ${MAIL_ADDR}
+      APP_PSSWRD: ${APP_PSSWRD}
+
+      SPRING_MAIL_HOST: smtp.gmail.com
+      SPRING_MAIL_PORT: 587
+      SPRING_MAIL_USERNAME: ${MAIL_ADDR}
+      SPRING_MAIL_PASSWORD: ${APP_PSSWRD}
+
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: "true"
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: "true"
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_REQUIRED: "true"
+
+    restart: always
+
+
+
 # ====== NAMED VOLUMES ======
 volumes:
   payment_data:
@@ -240,3 +284,4 @@ volumes:
   pgadmin_data:
   subscription_data:
   user_data:
+  auth_data:

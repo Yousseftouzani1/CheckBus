@@ -11,7 +11,7 @@
 	<groupId>ma.ensias.soa</groupId>
 	<artifactId>auth-service</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<packaging>war</packaging>
+	<packaging>jar</packaging>
 	<name>AuthService</name>
 	<description>Microservice d’authentification et génération de tokens JWT</description>
 	<url/>
