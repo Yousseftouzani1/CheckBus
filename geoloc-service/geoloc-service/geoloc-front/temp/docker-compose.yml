@@ -1,0 +1,108 @@
+version: '3.8'
+
+services:
+  # 🦒 ZOOKEEPER
+  zookeeper:
+    image: zookeeper:3.9
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    networks:
+      - backend
+
+  # 🐘 KAFKA
+  kafka:
+    image: confluentinc/cp-kafka:7.3.2
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:9092"
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "9092"]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+
+  # ⚡ REDIS
+  redis:
+    image: redis:7
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - backend
+
+  # 🗄️ POSTGRESQL
+  postgres:
+    image: postgres:17
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: geolocdb
+    ports:
+      - "5432:5432"
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+
+  # 🛰️ GEOLOC-SERVICE (Spring Boot)
+  geoloc-service:
+    build: ./geoloc-service/geoloc-service
+    container_name: geoloc-service
+    depends_on:
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/geolocdb
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_PROFILES_ACTIVE: prod
+    ports:
+      - "8089:8089"
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8089/geoloc/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  # 🚍 BUS SIMULATOR (auto-launch after service is up)
+  bus-simulator:
+    build:
+      context: ./geoloc-service/geoloc-service
+      dockerfile: Dockerfile
+    container_name: bus-simulator
+    depends_on:
+      geoloc-service:
+        condition: service_healthy
+    entrypoint: ["sh", "-c", "sleep 5 && java -cp app.jar ma.ensias.soa.geoloc_service.simulator.BusStompSimulator"]
+    networks:
+      - backend
+
+
+
+# 🌐 Shared network
+networks:
+  backend:
+    driver: bridge

@@ -18,6 +18,6 @@ COPY --from=builder /app/target/geoloc-service-*.jar app.jar
 COPY src/main/java/ma/ensias/soa/geoloc_service/simulator ./simulator
 
 ENV SPRING_PROFILES_ACTIVE=prod
-EXPOSE 8085
+EXPOSE 8089
 
 ENTRYPOINT ["java", "-jar", "app.jar"]

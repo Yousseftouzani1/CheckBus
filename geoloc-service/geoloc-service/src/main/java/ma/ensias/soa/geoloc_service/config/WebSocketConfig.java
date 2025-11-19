@@ -19,6 +19,12 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws/geoloc") // your endpoint
-                .setAllowedOriginPatterns("*"); // allow all origins
+                .setAllowedOriginPatterns("*") // allow all origins
+                .withSockJS(); // enable SockJS fallback
+
+        registry.addEndpoint("/stomp/geoloc")
+                .setAllowedOriginPatterns("*"); // allow all origins (for dev)
+
+        
     }
 }
