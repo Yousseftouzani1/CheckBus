@@ -1,22 +1,24 @@
 package ma.ensias.soa.subscription_service.client;
 
-import ma.ensias.soa.subscription_service.dto.PaymentRequestDTO;
-import ma.ensias.soa.subscription_service.dto.PaymentResponseDTO;
-
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import lombok.RequiredArgsConstructor;
+import ma.ensias.soa.subscription_service.dto.PaymentRequestDTO;
+import ma.ensias.soa.subscription_service.dto.PaymentResponseDTO;
+
+
+/**
+ * The `PaymentClient` class is a Spring component used for processing payments by sending a POST
+ * request to a payment service URL using RestTemplate.
+ */
 @Component
 @RequiredArgsConstructor
 public class PaymentClient {
 
     private final RestTemplate restTemplate;
-
-    @Value("${payment.service.url}")
-    private String paymentServiceUrl;
+    private final  String paymentServiceUrl="http://payment-service:8085/api/payments/process";
 
     public PaymentResponseDTO processPayment(PaymentRequestDTO request) {
         String url = paymentServiceUrl ;

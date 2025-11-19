@@ -172,6 +172,65 @@ services:
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
     restart: always
+# ======== Subscription Service ========
+  subscription-service:
+    build:
+      context: ./subscription-service/subscription-service
+      dockerfile: Dockerfile
+    container_name: subscription-service
+    depends_on:
+      - kafka
+      - subscription-db
+    ports:
+      - "8087:8087"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://subscription-db:5432/subscription_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+    restart: always
+    
+# ======= subscription database ============
+  subscription-db:
+    image: postgres:15
+    container_name: subscription-db
+    environment:
+      POSTGRES_DB: subscription_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - subscription_data:/var/lib/postgresql/data
+    restart: always
+# =========== User database =============
+  user-db:
+    image: postgres:15
+    container_name: user-db
+    environment:
+      POSTGRES_DB: user_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - user_data:/var/lib/postgresql/data
+    restart: always
+# =========== User service =============
+  user-service:
+    build:
+      context: ./user-service/user-service
+      dockerfile: Dockerfile
+    container_name: user-service
+    depends_on:
+      - user-db
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://user-db:5432/user_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    restart: always
 
 # ====== NAMED VOLUMES ======
 volumes:
@@ -179,3 +238,5 @@ volumes:
   ticket_data:
   trajet_data:
   pgadmin_data:
+  subscription_data:
+  user_data:

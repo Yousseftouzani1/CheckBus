@@ -35,6 +35,16 @@ public class PaymentService {
         this.eventProducer= eventProducer;
 
     }
+    
+public List<Payment> getPaymentsByTicketId(Long ticketId) {
+    return paymentRepository.findAllByTicketId(ticketId);
+}
+
+public List<Payment> getSuccessfulPayments() {
+    return paymentRepository.findAllByStatus(PaymentStatus.SUCCESS);
+}
+
+
     @Value("${stripe.secretKey}")
     private String stripeSecretKey;
 
@@ -107,7 +117,7 @@ public class PaymentService {
 
     // refund payement process
     public PaymentResponseDTO processRefund(RefundRequestDTO refundRequest) {
-    // Find the original payment
+                        // Find the original payment
     Payment payment = paymentRepository.findByTicketIdAndStatus(refundRequest.getTicketId(),PaymentStatus.SUCCESS);
     if(payment==null){
             throw new RuntimeException("Payment not found for ticket ID: " + refundRequest.getTicketId());
