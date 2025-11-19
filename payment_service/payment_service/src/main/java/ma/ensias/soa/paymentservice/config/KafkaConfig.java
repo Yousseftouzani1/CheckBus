@@ -43,31 +43,41 @@ public class KafkaConfig {
         return new KafkaTemplate<>(paymentProducerFactory());
     }
 
-    /* =============================================================
-        CONSUMER: RefundRequestDTO
-       ============================================================= */
-    @Bean
-    public ConsumerFactory<String, RefundRequestDTO> refundConsumerFactory() {
-        Map<String, Object> props = new HashMap<>();
-        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "kafka:29092");
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, "payment-service-group");
-        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
-        props.put(JsonDeserializer.TRUSTED_PACKAGES, "ma.ensias.soa.paymentservice.dto");
-        return new DefaultKafkaConsumerFactory<>(
-                props,
-                new StringDeserializer(),
-                new JsonDeserializer<>(RefundRequestDTO.class)
-        );
-    }
+/* =============================================================
+   CONSUMER: RefundRequestDTO
+   ============================================================= */
+@Bean
+public ConsumerFactory<String, RefundRequestDTO> refundConsumerFactory() {
 
-    @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, RefundRequestDTO> refundKafkaListenerContainerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, RefundRequestDTO> factory =
-                new ConcurrentKafkaListenerContainerFactory<>();
-        factory.setConsumerFactory(refundConsumerFactory());
-        return factory;
-    }
+    // 🔹 Configure le désérialiseur UNIQUEMENT en Java (pas via props)
+    JsonDeserializer<RefundRequestDTO> deserializer = new JsonDeserializer<>(RefundRequestDTO.class);
+    deserializer.addTrustedPackages("*");      // autorise tous les packages
+    deserializer.ignoreTypeHeaders();          // ignore les headers __TypeId__
+
+    // 🔹 Propriétés de base du consumer
+    Map<String, Object> props = new HashMap<>();
+    props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "kafka:29092");
+    props.put(ConsumerConfig.GROUP_ID_CONFIG, "payment-service-group");
+    props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
+    // ❌ Ne mets PAS JsonDeserializer.TRUSTED_PACKAGES ici → conflit garanti
+
+    // ✅ Utilise ton deserializer configuré manuellement
+    return new DefaultKafkaConsumerFactory<>(
+            props,
+            new StringDeserializer(),
+            deserializer
+    );
+}
+
+@Bean
+public ConcurrentKafkaListenerContainerFactory<String, RefundRequestDTO> refundKafkaListenerContainerFactory() {
+    ConcurrentKafkaListenerContainerFactory<String, RefundRequestDTO> factory =
+            new ConcurrentKafkaListenerContainerFactory<>();
+    factory.setConsumerFactory(refundConsumerFactory());
+    return factory;
+}
+
 
     /* =============================================================
         TOPICS 
