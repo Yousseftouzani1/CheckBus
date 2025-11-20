@@ -3,38 +3,32 @@ package ma.ensias.soa.trajetservice.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-
-import java.util.Arrays;
-import java.util.List;
+import org.springframework.web.filter.CorsFilter;
 
 @Configuration
-public class CorsConfig implements WebMvcConfigurer {
-
-    @Override
-    public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**")
-                .allowedOrigins("http://localhost:3000") // frontend origin
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                .allowedHeaders("*")
-                .allowCredentials(true)
-                .maxAge(3600);
-    }
+public class CorsConfig {
 
     @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("http://localhost:3000"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("*"));
-        configuration.setAllowCredentials(true);
-        configuration.setMaxAge(3600L);
+    public CorsFilter corsFilter() {
+        CorsConfiguration config = new CorsConfiguration();
+        
+        // Allow all origins (completely open)
+        config.addAllowedOriginPattern("*"); // use addAllowedOriginPattern instead of addAllowedOrigin for wildcard
+        
+        // Allow all headers
+        config.addAllowedHeader("*");
+        
+        // Allow all HTTP methods (GET, POST, PUT, DELETE, OPTIONS, etc.)
+        config.addAllowedMethod("*");
 
+        // Allow credentials (cookies, authorization headers, etc.)
+        config.setAllowCredentials(true);
+
+        // Register configuration for all paths
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
+        source.registerCorsConfiguration("/**", config);
+        
+        return new CorsFilter(source);
     }
 }

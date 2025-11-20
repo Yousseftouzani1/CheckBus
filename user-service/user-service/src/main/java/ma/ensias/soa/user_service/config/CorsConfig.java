@@ -1,4 +1,4 @@
-package ma.ensias.soa.ticketservice.config;
+package ma.ensias.soa.user_service.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

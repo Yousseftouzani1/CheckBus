@@ -25,7 +25,11 @@ private PaymentInfoMapper paymentInfoMapper;
 
 
 
-
+//constructor
+public PaymentInfoService(PaymentInfoRepository repository, PaymentInfoMapper paymentInfoMapper) {
+    this.repository = repository;
+    this.paymentInfoMapper = paymentInfoMapper;
+}
 // register payement data for audit 
 public PaymentInfoDTO registerPayment(PaymentEventDTO paymentEventDTO) {
 
@@ -70,6 +74,8 @@ public List<PaymentInfoDTO> getSuccessfulPayments() {
     // 3️⃣ Return the DTO list
     return dtoList;
 }
+
+
 
 /*
 Store metadata	Include previousStatus, newStatus, changedBy, changedAt.
