@@ -8,18 +8,22 @@ import Payment from "./pages/Payment";
 import ReserveSeat from "./pages/ReserveSeat";
 import Subscriptions from "./pages/Subscriptions";
 import ModifyTicket from "./pages/ModifyTicket";
-import SubscriptionCheckout from "./pages/SubscriptionCheckout"
+import SubscriptionCheckout from "./pages/SubscriptionCheckout";
 import Register from "./pages/Register";
+import MapPage from "./pages/MapPage";
+
 function App() {
   const [user, setUser] = useState(null);
-
+  
   return (
     <BrowserRouter>
       <Routes>
         {!user && (
-          <><Route path="/" element={<LoginForm onLogin={setUser} />} /><Route path="/register" element={<Register />} /></>
+          <>
+            <Route path="/" element={<LoginForm onLogin={setUser} />} />
+            <Route path="/register" element={<Register />} />
+          </>
         )}
-
         {user && (
           <>
             <Route path="/" element={<Menu />} />
@@ -30,8 +34,7 @@ function App() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/tickets/:ticketId/modify" element={<ModifyTicket />} />
             <Route path="/checkout" element={<SubscriptionCheckout />} />
-            
-
+            <Route path="/map" element={<MapPage />} />
           </>
         )}
       </Routes>

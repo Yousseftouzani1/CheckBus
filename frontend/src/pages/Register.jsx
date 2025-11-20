@@ -25,14 +25,33 @@ export default function Register() {
       return;
     }
 
-    // TODO: Replace with your real backend call
-    console.log("Creating user:", { fullName, email });
+    try {
+      const response = await fetch("http://localhost:8084/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          username: fullName,   // backend expects username
+          email: email,
+          password: password
+        })
+      });
 
-    setSuccess(true);
+      if (!response.ok) {
+        const err = await response.text();
+        throw new Error(err || "Registration failed");
+      }
 
-    setTimeout(() => {
-      navigate("/");
-    }, 2000);
+      setSuccess(true);
+
+      setTimeout(() => {
+        navigate("/");
+      }, 2000);
+
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   return (

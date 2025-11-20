@@ -63,7 +63,7 @@ export default function Menu() {
       title: 'Live Bus Map',
       description: 'Track buses in real-time',
       gradient: 'bg-gradient-to-br from-green-500 to-emerald-500',
-      path: '/live-map'
+      path: '/map'
     },
     {
       icon: BadgeCheck ,
