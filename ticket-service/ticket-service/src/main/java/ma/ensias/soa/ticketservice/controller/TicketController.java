@@ -49,7 +49,14 @@ public ResponseEntity<TicketResponseDTO> buyTicket(
     public ResponseEntity<List<TicketResponseDTO>> getTicketsByUser(@PathVariable Long userId) {
         return ResponseEntity.ok(ticketService.getTicketsByUserId(userId));
     }
-
+    @GetMapping("/trip/{tripId}")
+    public ResponseEntity<List<TicketResponseDTO>> getTicketsByTrip(@PathVariable Long tripId) {
+        List<TicketResponseDTO> tickets = ticketService.getTicketsByTripId(tripId);
+        if (tickets.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(tickets);
+    }
 
 
 

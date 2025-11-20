@@ -3,6 +3,7 @@ package ma.ensias.soa.ticketservice.service;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Service;
@@ -63,7 +64,7 @@ public List<TicketResponseDTO> getTicketsByUserId(Long userId) {
 
 
 /*
- * Reserve a seat for 15 minutes
+    Reserve a seat for 15 minutes
  */
 public TicketResponseDTO reserveTicket(TicketRequestDTO ticketRequest) {
     // 1. Check if seat already exists
@@ -250,4 +251,11 @@ public void handleRefundConfirmation(PaymentEventDTO event) {
     System.out.println("Refund confirmed for ticket ID: " + event.getTicketId());
 }
 
+
+public List<TicketResponseDTO> getTicketsByTripId(Long tripId) {
+        return repo.findByTripId(tripId)
+                .stream()
+                .map(TicketMapper::toDto) // ✅ utilise ton mapper
+                .collect(Collectors.toList());
+    }
 }
