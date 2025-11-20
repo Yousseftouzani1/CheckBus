@@ -11,7 +11,7 @@ import ModifyTicket from "./pages/ModifyTicket";
 import SubscriptionCheckout from "./pages/SubscriptionCheckout";
 import Register from "./pages/Register";
 import MapPage from "./pages/MapPage";
-
+import PaymentsDashboard from "./pages/PaymentsDashboard";
 function App() {
   const [user, setUser] = useState(null);
   
@@ -35,6 +35,7 @@ function App() {
             <Route path="/tickets/:ticketId/modify" element={<ModifyTicket />} />
             <Route path="/checkout" element={<SubscriptionCheckout />} />
             <Route path="/map" element={<MapPage />} />
+            <Route path="/payments" element={<PaymentsDashboard />} />
           </>
         )}
       </Routes>
