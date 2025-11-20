@@ -46,6 +46,7 @@ const getUserFromToken = () => {
   return {
     name: payload.name || payload.username || payload.sub || 'User',
     email: payload.email || payload.mail || 'user@example.com',
+    userId: payload.userId || payload.id || payload.sub || 35,
     memberSince: payload.iat 
       ? new Date(payload.iat * 1000).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
       : 'Recently',
@@ -53,46 +54,30 @@ const getUserFromToken = () => {
   };
 };
 
-// ============= MOCK DATA =============
-const MOCK_TICKETS = [
-  {
-    id: 101,
-    busNumber: "B12",
-    from: "Rabat Ville",
-    to: "Agdal",
-    seat: 14,
-    price: "25 MAD",
-    status: "PAID",
-    purchaseDate: "2025-11-12 10:23",
-    departure: "08:30",
-    arrival: "09:15"
-  },
-  {
-    id: 102,
-    busNumber: "C21",
-    from: "Temara",
-    to: "Hay Riad",
-    seat: 7,
-    price: "20 MAD",
-    status: "RESERVED",
-    purchaseDate: "2025-11-10 08:11",
-    departure: "14:00",
-    arrival: "14:45"
-  },
-  {
-    id: 103,
-    busNumber: "A15",
-    from: "Sale",
-    to: "Rabat Ville",
-    seat: 22,
-    price: "15 MAD",
-    status: "CANCELLED",
-    purchaseDate: "2025-11-08 16:30",
-    departure: "12:00",
-    arrival: "12:30"
-  }
-];
+// ============= API FUNCTIONS =============
+const fetchUserTickets = async (userId) => {
+  try {
+    const response = await fetch(`http://localhost:8081/api/tickets/user/35`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include' // Important: includes cookies in request
+    });
 
+    if (!response.ok) {
+      throw new Error('Failed to fetch tickets');
+    }
+
+    const tickets = await response.json();
+    return tickets;
+  } catch (error) {
+    console.error('Error fetching tickets:', error);
+    return [];
+  }
+};
+
+// ============= MOCK DATA =============
 const MOCK_SUBSCRIPTIONS = [
   {
     id: 1,
@@ -479,7 +464,8 @@ export default function Profile() {
   
   // Get user from JWT token
   const [user, setUser] = useState(null);
-  const [tickets] = useState(MOCK_TICKETS);
+  const [tickets, setTickets] = useState([]);
+  const [loadingTickets, setLoadingTickets] = useState(true);
   const [subscriptions] = useState(MOCK_SUBSCRIPTIONS);
   const [selectedTicket, setSelectedTicket] = useState(null);
 
@@ -495,6 +481,16 @@ export default function Profile() {
     
     setUser(userData);
     console.log('User loaded from JWT:', userData);
+
+    // Fetch user tickets
+    const loadTickets = async () => {
+      setLoadingTickets(true);
+      const userTickets = await fetchUserTickets(userData.userId);
+      setTickets(userTickets);
+      setLoadingTickets(false);
+    };
+
+    loadTickets();
   }, [navigate]);
 
   // Action handlers
@@ -535,10 +531,13 @@ export default function Profile() {
   };
 
   // Show loading state while checking authentication
-  if (!user) {
+  if (!user || loadingTickets) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-900 flex items-center justify-center">
-        <div className="text-white text-xl">Loading...</div>
+        <div className="text-center">
+          <div className="text-white text-xl mb-2">Loading...</div>
+          {loadingTickets && <div className="text-blue-200 text-sm">Fetching your tickets...</div>}
+        </div>
       </div>
     );
   }
