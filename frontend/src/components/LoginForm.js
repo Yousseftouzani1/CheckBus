@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Bus, Mail, Lock, ArrowRight, MapPin } from 'lucide-react';
-
+import { useNavigate } from "react-router-dom";
 export default function LoginForm({ onLogin }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-
+  const navigate = useNavigate(); 
   const handleSubmit = async () => {
     setIsLoading(true);
     
@@ -30,6 +30,10 @@ export default function LoginForm({ onLogin }) {
         <div className="absolute top-20 left-10 w-72 h-72 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
         <div className="absolute top-40 right-10 w-72 h-72 bg-indigo-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse delay-75"></div>
         <div className="absolute -bottom-20 left-1/2 w-72 h-72 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse delay-150"></div>
+
+                <div className="absolute -bottom-20 left-1/2 w-55 h-90 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse delay-150"></div>
+        <div className="absolute -bottom-50 left-1/2 w-72 h-72 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse delay-150"></div>
+
       </div>
 
       {/* Floating bus route lines */}
@@ -40,6 +44,27 @@ export default function LoginForm({ onLogin }) {
         <path d="M0,300 Q250,350 500,300 T1000,300" stroke="white" strokeWidth="2" fill="none" strokeDasharray="10,5">
           <animate attributeName="stroke-dashoffset" from="100" to="0" dur="15s" repeatCount="indefinite" />
         </path>
+<g transform="translate(0, 400)">
+    <path
+      d="M0,100 Q250,50 500,100 T1000,100"
+      stroke="white"
+      strokeWidth="2"
+      fill="none"
+      strokeDasharray="10,5"
+    >
+      <animate attributeName="stroke-dashoffset" from="0" to="100" dur="20s" repeatCount="indefinite" />
+    </path>
+
+    <path
+      d="M0,300 Q250,350 500,300 T1000,300"
+      stroke="white"
+      strokeWidth="2"
+      fill="none"
+      strokeDasharray="10,5"
+    >
+      <animate attributeName="stroke-dashoffset" from="100" to="0" dur="15s" repeatCount="indefinite" />
+    </path>
+  </g>
       </svg>
 
       {/* Login Card */}
@@ -130,12 +155,14 @@ export default function LoginForm({ onLogin }) {
           </div>
 
           {/* Sign Up Link */}
-          <button
-            type="button"
-            className="w-full bg-white/10 backdrop-blur-sm text-white font-semibold py-4 rounded-xl hover:bg-white/20 focus:outline-none focus:ring-4 focus:ring-white/30 transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 border border-white/20"
-          >
-            Create an account
-          </button>
+        <button
+  type="button"
+  onClick={() => navigate("/register")}
+  className="w-full bg-white/10 backdrop-blur-sm text-white font-semibold py-4 rounded-xl hover:bg-white/20 focus:outline-none focus:ring-4 focus:ring-white/30 transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 border border-white/20"
+>
+  Create an account
+    </button>
+
 
           {/* Footer Info */}
           <div className="mt-6 flex items-center justify-center text-sm text-blue-100">

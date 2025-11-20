@@ -9,6 +9,7 @@ import ReserveSeat from "./pages/ReserveSeat";
 import Subscriptions from "./pages/Subscriptions";
 import ModifyTicket from "./pages/ModifyTicket";
 import SubscriptionCheckout from "./pages/SubscriptionCheckout"
+import Register from "./pages/Register";
 function App() {
   const [user, setUser] = useState(null);
 
@@ -16,7 +17,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         {!user && (
-          <Route path="/" element={<LoginForm onLogin={setUser} />} />
+          <><Route path="/" element={<LoginForm onLogin={setUser} />} /><Route path="/register" element={<Register />} /></>
         )}
 
         {user && (
@@ -29,6 +30,8 @@ function App() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/tickets/:ticketId/modify" element={<ModifyTicket />} />
             <Route path="/checkout" element={<SubscriptionCheckout />} />
+            
+
           </>
         )}
       </Routes>
