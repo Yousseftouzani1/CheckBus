@@ -60,9 +60,9 @@ export default function PaymentsDashboard({ userId = 1 }) {
       try {
         // Attempt fetch
         const [ticketsResponse, paymentsResponse, trajetsResponse] = await Promise.all([
-          fetch(`/api/tickets/user/${userId}`),
-          fetch(`/api/payments/successful`),
-          fetch(`/api/trajets`)
+  fetch(`http://localhost:8081/api/tickets/user/${userId}`),   // Ticket-Service
+  fetch(`http://localhost:8085/api/payments/successful`),      // Payment-Service
+  fetch(`http://localhost:8083/api/trajets`)   
         ]);
 
         if (!ticketsResponse.ok || !paymentsResponse.ok || !trajetsResponse.ok) {
@@ -186,9 +186,10 @@ export default function PaymentsDashboard({ userId = 1 }) {
               HEADER
             =============================================================== */}
           <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-3xl mb-6 shadow-2xl animate-bounce-slow">
-              <Wallet className="w-10 h-10 text-white" />
-            </div>
+<div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-indigo-600 to-purple-700 rounded-3xl mb-6 shadow-2xl animate-bounce-slow">
+  <Wallet className="w-10 h-10 text-white" />
+</div>
+
 
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 animate-fade-in">
               My Payments Dashboard 
