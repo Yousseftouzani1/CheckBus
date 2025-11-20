@@ -47,7 +47,7 @@ const MOCK_RECENT_PAYMENTS = [
 // ===============================================================
 //                    PAYMENTS DASHBOARD PAGE
 // ===============================================================
-export default function PaymentsDashboard({ userId = 1 }) {
+export default function PaymentsDashboard({ userId = 35 }) {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(MOCK_STATS);
   const [favoriteRoutes, setFavoriteRoutes] = useState(MOCK_FAVORITE_ROUTES);
@@ -75,14 +75,28 @@ export default function PaymentsDashboard({ userId = 1 }) {
         const trajets = await trajetsResponse.json();
 
         // ============= CALCULATE REAL STATS =============
-        const reserved = tickets.filter(t => t.status === "RESERVED").length;
-        const bought = tickets.filter(t => t.status === "PAID").length;
-        const cancelled = tickets.filter(t => t.status === "CANCELLED").length;
 
-        const totalSpent = payments
-          .filter(p => p.userId === userId)
-          .reduce((s, p) => s + (p.amount || 0), 0);
+        const paymentsPromises = tickets.map(t =>
+        fetch(`http://localhost:8085/api/payments/ticket/${t.id}`)
+          .then(r => r.ok ? r.json() : [])
+          .catch(() => [])
+      );
 
+      const allPaymentsNested = await Promise.all(paymentsPromises);
+      const allPayments = allPaymentsNested.flat();
+      
+      // 3️⃣ Keep only successful payments
+      const successfulPayments = allPayments.filter(p => p.status === "SUCCESS");
+
+      // 4️⃣ Compute total spent
+      const totalSpent = successfulPayments.reduce(
+        (sum, p) => sum + (p.amount || p.price || 0),
+        0
+      );
+      // Optional: compute other ticket stats
+      const reserved = tickets.filter(t => t.status === "RESERVED").length;
+      const bought = tickets.filter(t => t.status === "PAID").length;
+      const cancelled = tickets.filter(t => t.status === "CANCELLED").length;
         setStats({
           totalReserved: reserved,
           totalBought: bought,
@@ -93,7 +107,7 @@ export default function PaymentsDashboard({ userId = 1 }) {
         // ============= CALCULATE FAVORITE ROUTES =============
         const routeCount = {};
         tickets.forEach(t => {
-          const trajet = trajets.find(tr => tr.id === t.trajetId);
+          const trajet = trajets.find(tr => tr.id === t.tripId);
           if (!trajet) return;
           const key = `${trajet.depart}-${trajet.arrivee}`;
           routeCount[key] = (routeCount[key] || 0) + 1;
@@ -110,23 +124,28 @@ export default function PaymentsDashboard({ userId = 1 }) {
         setFavoriteRoutes(sortedRoutes);
 
         // ============= RECENT PAYMENTS =============
-        const formattedPayments = payments
-          .filter(p => p.userId === userId)
-          .sort((a, b) => new Date(b.paymentDate) - new Date(a.paymentDate))
-          .slice(0, 10)
-          .map(p => ({
-            id: p.id,
-            date: new Date(p.paymentDate).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-              year: "numeric"
-            }),
-            amount: p.amount,
-            reference: p.ticketId ? `Ticket #${p.ticketId}` : "Subscription",
-            status: p.status || "SUCCESS"
-          }));
+        const formattedPayments = successfulPayments
+  // ✅ Only payments linked to tickets
+  .filter(p => p.ticketId !== null && p.ticketId !== undefined)
+  // ✅ Sort by newest first (assuming createdAt exists)
+  .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+  // ✅ Keep only the 10 most recent
+  .slice(0, 10)
+  // ✅ Format for dashboard display
+  .map(p => ({
+    id: p.id,
+    date: new Date(p.createdAt || Date.now()).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric"
+    }),
+    amount: p.amount || p.price || 0,
+    reference: `Ticket #${p.ticketId}`,
+    status: p.status || "SUCCESS"
+  }));
 
-        setRecentPayments(formattedPayments);
+setRecentPayments(formattedPayments);
+
 
       } catch (error) {
         console.warn("⚠ API FAILED — Using mocked dashboard data instead.");

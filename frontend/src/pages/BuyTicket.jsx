@@ -318,15 +318,46 @@ function BusResults({ buses, onBuyTicket ,onReserveSeat }) {
 export default function BuyTicket() {
   const [searchResults, setSearchResults] = useState([]);
   const [hasSearched, setHasSearched] = useState(false);
-const navigate = useNavigate();
-  const handleSearch = (startStation, endStation) => {
-    // Filter buses based on selected stations
+  const navigate = useNavigate();
+
+const handleSearch = async (startStation, endStation) => {
+  setHasSearched(true);
+
+  try {
+    const response = await fetch(
+      `http://localhost:8083/api/trajets/search?depart=${encodeURIComponent(startStation)}&arrivee=${encodeURIComponent(endStation)}`
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch trajets");
+    }
+
+    const trajets = await response.json();
+
+    const mapped = trajets.map(t => ({
+      id: t.id,
+      number: t.ligneCode,
+      from: t.depart,
+      to: t.arrivee,
+      departure: t.depart,
+      arrival: t.arrivee,
+      delay: 0,
+      status: t.active ? "On Time" : "Inactive",
+      price: (t.distanceKm * 0.6).toFixed(2) + " MAD"
+    }));
+
+    setSearchResults(mapped);
+  } catch (err) {
+    console.error("API error, falling back to mock data:", err);
+
     const filtered = MOCK_BUSES.filter(
       bus => bus.from === startStation && bus.to === endStation
     );
+
     setSearchResults(filtered);
-    setHasSearched(true);
-  };
+  }
+};
+
 
   const handleBuyTicket = (bus) => {
     console.log('Buying ticket for bus:', bus);
