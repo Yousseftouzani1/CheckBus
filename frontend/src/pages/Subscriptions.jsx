@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { CreditCard, Check, Zap, Shield, Star, Clock, Users, Sparkles, ArrowRight } from 'lucide-react';
-
+import { useNavigate } from "react-router-dom";
 // ============= SUBSCRIPTION DATA =============
 const SUBSCRIPTIONS = [
   {
@@ -189,11 +189,13 @@ function BenefitsSection() {
 // ============= MAIN SUBSCRIPTIONS PAGE =============
 export default function Subscriptions() {
   const [selectedSubscription, setSelectedSubscription] = useState(null);
-
+  const navigate = useNavigate();
   const handleSubscribe = (subscription) => {
     setSelectedSubscription(subscription);
     console.log('Subscribing to:', subscription);
-    
+     const safeSubscription = JSON.parse(JSON.stringify(subscription));
+navigate("/checkout", { state: { subscription: safeSubscription } });
+
     // TODO: Integration points:
     // 1. Navigate to payment page with subscription data
     // navigate("/payment", { state: { subscription } });
