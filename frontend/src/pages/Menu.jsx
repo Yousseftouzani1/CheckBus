@@ -1,5 +1,5 @@
 import React from 'react';
-import { Ticket, Calendar, MapPin, CreditCard, User, Bus, LogOut } from 'lucide-react';
+import { Ticket, Calendar, MapPin, CreditCard, User, Bus, LogOut ,BadgeCheck } from 'lucide-react';
 import { useNavigate } from "react-router-dom";
 
 // MenuCard Component
@@ -50,13 +50,14 @@ export default function Menu() {
       gradient: 'bg-gradient-to-br from-blue-500 to-cyan-500',
       path: '/buy-ticket'
     },
-    {
-      icon: Calendar,
-      title: 'Reserve Seat',
-      description: 'Book your preferred seat in advance',
-      gradient: 'bg-gradient-to-br from-indigo-500 to-purple-500',
-      path: '/reserve-seat'
-    },
+{
+  icon: CreditCard,
+  title: 'Payments',
+  description: 'View and manage your payments',
+  gradient: 'bg-gradient-to-br from-yellow-500 to-orange-600',
+  path: '/payments'
+},
+
     {
       icon: MapPin,
       title: 'Live Bus Map',
@@ -65,7 +66,7 @@ export default function Menu() {
       path: '/live-map'
     },
     {
-      icon: CreditCard,
+      icon: BadgeCheck ,
       title: 'Subscriptions',
       description: 'Manage your travel passes',
       gradient: 'bg-gradient-to-br from-orange-500 to-red-500',
