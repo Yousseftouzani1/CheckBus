@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { CreditCard, Lock, ArrowRight, CheckCircle, XCircle } from "lucide-react";
-
+import { useParams, useNavigate } from "react-router-dom";
 export default function Payment() {
   const [cardNumber, setCardNumber] = useState("4242 4242 4242 4242"); // auto-fill test card
   const [exp, setExp] = useState("12/29");
@@ -9,29 +9,47 @@ export default function Payment() {
   const [processing, setProcessing] = useState(false);
   const [result, setResult] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
-
+  const { ticketId } = useParams();          // ✅ Read ticketId from URL
+  const navigate = useNavigate();   
+// --------------------------------------------
+  //            HANDLE PAYMENT
+  // --------------------------------------------
   const handlePayment = async () => {
     setProcessing(true);
 
     try {
-      const response = await fetch("http://localhost:8080/payment/process", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ticketId: 12,      // TODO: Replace with selected ticket ID
-          amount: 20.00      // TODO: Replace with actual ticket amount
-        })
-      });
+      const response = await fetch(
+        `http://localhost:8081/api/tickets/${ticketId}/buy?method=CARD`,
+        {
+          method: "POST",
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        setResult({
+          status: "FAILED",
+          message: `Server Error: ${response.status} - ${errorText}`,
+        });
+        setProcessing(false);
+        return;
+      }
 
       const data = await response.json();
       setResult(data);
 
-      if (data.status === "SUCCESS") {
-  setShowSuccess(true);
-}
+      if (data.paymentStatus === "SUCCESS" || data.status === "SUCCESS") {
+        setShowSuccess(true);
+
+        // Optional: redirect after 2 seconds
+        setTimeout(() => navigate("/success"), 2000);
+      }
 
     } catch (err) {
-      setResult({ status: "FAILED", message: "Connection error" });
+      setResult({
+        status: "FAILED",
+        message: "Network error – server unreachable.",
+      });
     }
 
     setProcessing(false);
