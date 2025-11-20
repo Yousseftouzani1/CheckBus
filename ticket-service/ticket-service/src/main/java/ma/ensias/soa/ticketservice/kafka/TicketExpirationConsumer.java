@@ -24,7 +24,7 @@ public class TicketExpirationConsumer {
 
         // Check if ticket is still unpaid
         if (ticket.getStatus() == TicketStatus.RESERVED) {
-            ticket.setStatus(TicketStatus.FREE);
+            //ticket.setStatus(TicketStatus.FREE);
             ticket.setUpdatedAt(new Timestamp(System.currentTimeMillis()));
             ticketRepository.save(ticket);
 

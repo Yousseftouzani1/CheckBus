@@ -1,20 +1,68 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect  } from 'react';
 import { Bus, User, Check, ArrowRight, Info, Circle } from 'lucide-react';
 import { useLocation } from "react-router-dom";
-// ============= MOCK SEAT DATA =============
-const generateSeats = () => {
-  const seats = [];
-  const totalSeats = 40;
-  
-  for (let i = 1; i <= totalSeats; i++) {
-    seats.push({
-      number: i,
-      reserved: Math.random() > 0.7 // 30% chance of being reserved
-    });
-  }
-  
-  return seats;
+import { useNavigate } from "react-router-dom";
+
+// ============= JWT HELPER FUNCTIONS =============
+const getCookie = (name) => {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return null;
 };
+
+const parseJwt = (token) => {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    return JSON.parse(jsonPayload);
+  } catch (error) {
+    console.error('Error parsing JWT:', error);
+    return null;
+  }
+};
+
+const getUserFromToken = () => {
+  const token = getCookie('jwt') || getCookie('token') || getCookie('authToken');
+  
+  if (!token) {
+    console.warn('No JWT token found in cookies');
+    return null;
+  }
+
+  const payload = parseJwt(token);
+  
+  if (!payload) {
+    console.warn('Could not parse JWT token');
+    return null;
+  }
+
+  // Extract user info from common JWT claim names
+  return {
+    name: payload.name || payload.username || payload.sub || 'User',
+    email: payload.email || payload.mail || 'user@example.com',
+    userId: payload.userId || payload.id || payload.sub || 35,
+    memberSince: payload.iat 
+      ? new Date(payload.iat * 1000).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+      : 'Recently',
+    avatar: null
+  };
+};
+// ============= MOCK SEAT DATA =============
+// Converts seatcode ("A3") → seat number (1–40)
+function seatCodeToNumber(code) {
+  if (!code) return null;
+  const seatNumber = parseInt(code, 10);
+  return isNaN(seatNumber) ? null : seatNumber;
+}
+
+
 
 // ============= SEAT COMPONENT =============
 function Seat({ seat, isSelected, onSelect }) {
@@ -181,35 +229,124 @@ function BusLayout({ bus, seats, selectedSeat, onSeatSelect }) {
 
 // ============= MAIN RESERVE SEAT PAGE =============
 export default function ReserveSeat() {
-  // In real app, get from React Router location state:
-  // const location = useLocation();
-  // const bus = location.state?.bus;
+
   
   // Mock bus data for demo
+const navigate = useNavigate();
 const location = useLocation();
 const bus = location.state?.bus;
+const busNumber = location.state?.busNumber;
+const tripId = location.state?.tripId;
+const user = getUserFromToken();
+const [seats, setSeats] = useState([]);
+const [loadingSeats, setLoadingSeats] = useState(true);
+const [selectedSeat, setSelectedSeat] = useState(null);
+const handleSeatSelect = (seatNumber) => { setSelectedSeat(seatNumber) ;  };
+// Get the seats from backend 
+useEffect(() => {
+  async function loadSeats() {
+    try {
+      const response = await fetch(`http://localhost:8081/api/tickets/trip/${bus.tripId || bus.id}`);
 
+      let ticketList = [];
+      if (response.ok) {
+        ticketList = await response.json();
+      }
 
-  const [seats] = useState(generateSeats());
-  const [selectedSeat, setSelectedSeat] = useState(null);
+      // 1. Build the full seat map (40 seats)
+      const seatMap = [];
+      for (let i = 1; i <= 40; i++) {
+        seatMap.push({
+          number: i,
+          reserved: false
+        });
+      }
 
-  const handleSeatSelect = (seatNumber) => {
-    setSelectedSeat(seatNumber);
-  };
-
-  const handleConfirm = () => {
-    if (selectedSeat) {
-      console.log('Navigating to payment with:', {
-        bus,
-        seatNumber: selectedSeat
+      // 2. Mark booked seats from backend
+      ticketList.forEach(ticket => {
+        if (["RESERVED", "PAID", "VALIDATED"].includes(ticket.status)) {
+          const seatNumber = seatCodeToNumber(ticket.seatcode);
+          const index = seatMap.findIndex(s => s.number === seatNumber);
+          if (index !== -1) {
+            seatMap[index].reserved = true;
+          }
+        }
       });
-      // In real app:
-      // navigate("/payment", { state: { bus, seatNumber: selectedSeat } });
+
+      setSeats(seatMap);
+    } catch (err) {
+      console.error("Seat loading failed. Using fallback seats.");
+      
+      // fallback = all seats free
+      const fallback = [];
+      for (let i = 1; i <= 40; i++) {
+        fallback.push({ number: i, reserved: false });
+      }
+      setSeats(fallback);
+    } finally {
+      setLoadingSeats(false);
     }
+  }
+
+  if (bus) {
+    loadSeats();
+  }
+}, [bus]);
+//////////////////////// RESERVE TICKET ///////////////////
+
+const handleConfirm = async () => {
+  if (!selectedSeat) return;
+
+  const requestBody = {
+    userId: user?.userId,              // TODO: later extract from JWT
+    tripId: tripId,
+    seatcode: String(selectedSeat),
+    price: parseFloat(bus.price),  // convert "25 MAD" → 25
+    paymentMethod: "CARD"
   };
+
+  console.log("Sending reserve ticket request:", requestBody);
+
+  try {
+    const response = await fetch("http://localhost:8081/api/tickets/reserve", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(requestBody)
+    });
+
+    if (!response.ok) {
+      throw new Error("Reservation failed");
+    }
+
+    const data = await response.json();
+    console.log("Reservation successful:", data);
+
+    // 🚀 Redirect to payment with ticketId and seat info
+    navigate("/payment", {
+      state: {
+        ticketId: data.id,
+        seatNumber: selectedSeat,
+        busNumber: busNumber,
+        tripId: tripId
+      }
+    });
+
+  } catch (error) {
+    console.error("Reservation error:", error);
+    alert("Could not reserve seat. It may already be taken.");
+  }
+};
+////////////////////////////////////////////////////
 
   const availableSeats = seats.filter(s => !s.reserved).length;
   const reservedSeats = seats.filter(s => s.reserved).length;
+  if (loadingSeats) {
+  return (
+    <div className="min-h-screen flex items-center justify-center text-white">
+      Loading seat layout...
+    </div>
+  );
+}
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-900 relative overflow-hidden">

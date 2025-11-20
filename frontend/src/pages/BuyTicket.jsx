@@ -336,9 +336,10 @@ const handleSearch = async (startStation, endStation) => {
 
     const mapped = trajets.map(t => ({
       id: t.id,
+      tripId: t.id, 
       number: t.ligneCode,
       from: t.depart,
-      to: t.arrivee,
+      to: t.arrivee,   
       departure: t.depart,
       arrival: t.arrivee,
       delay: 0,
@@ -367,7 +368,14 @@ const handleSearch = async (startStation, endStation) => {
   };
   const handleReserveSeat = (bus) => {
   console.log("Reserving seat for bus:", bus);
-  navigate(`/reserve-seat/${bus.id}`, { state: { bus } });
+  navigate(`/reserve-seat/${bus.tripId}`, { 
+  state: { 
+    busNumber: bus.number,
+    tripId: bus.tripId,
+    bus 
+  } 
+});
+
 };
 
 

@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { CreditCard, Lock, ArrowRight, CheckCircle, XCircle } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
+
 export default function Payment() {
   const [cardNumber, setCardNumber] = useState("4242 4242 4242 4242"); // auto-fill test card
   const [exp, setExp] = useState("12/29");
@@ -9,8 +11,10 @@ export default function Payment() {
   const [processing, setProcessing] = useState(false);
   const [result, setResult] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
-  const { ticketId } = useParams();          // ✅ Read ticketId from URL
   const navigate = useNavigate();   
+  const location = useLocation();
+const { ticketId } = location.state || {};
+
 // --------------------------------------------
   //            HANDLE PAYMENT
   // --------------------------------------------
@@ -37,6 +41,7 @@ export default function Payment() {
 
       const data = await response.json();
       setResult(data);
+      setShowSuccess(true);
 
       if (data.paymentStatus === "SUCCESS" || data.status === "SUCCESS") {
         setShowSuccess(true);
