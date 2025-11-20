@@ -78,7 +78,7 @@ public class KafkaConfig {
                 new JsonDeserializer<>(PaymentEventDTO.class)
         );
     }
-
+ 
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, PaymentEventDTO> paymentKafkaListenerContainerFactory() {
         ConcurrentKafkaListenerContainerFactory<String, PaymentEventDTO> factory =
