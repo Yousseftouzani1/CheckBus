@@ -1,17 +1,59 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Ticket, CreditCard, Bus, ArrowRight, Trash2, RefreshCw, X, Calendar, MapPin, Clock, Mail, Edit, CheckCircle, AlertCircle, XCircle } from 'lucide-react';
 import { useNavigate } from "react-router-dom";
 
-
-
-// ============= MOCK DATA =============
-const MOCK_USER = {
-  name: "Ahmed Bennani",
-  email: "ahmed.bennani@email.com",
-  memberSince: "January 2024",
-  avatar: null
+// ============= JWT HELPER FUNCTIONS =============
+const getCookie = (name) => {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return null;
 };
 
+const parseJwt = (token) => {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    return JSON.parse(jsonPayload);
+  } catch (error) {
+    console.error('Error parsing JWT:', error);
+    return null;
+  }
+};
+
+const getUserFromToken = () => {
+  const token = getCookie('jwt') || getCookie('token') || getCookie('authToken');
+  
+  if (!token) {
+    console.warn('No JWT token found in cookies');
+    return null;
+  }
+
+  const payload = parseJwt(token);
+  
+  if (!payload) {
+    console.warn('Could not parse JWT token');
+    return null;
+  }
+
+  // Extract user info from common JWT claim names
+  return {
+    name: payload.name || payload.username || payload.sub || 'User',
+    email: payload.email || payload.mail || 'user@example.com',
+    memberSince: payload.iat 
+      ? new Date(payload.iat * 1000).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+      : 'Recently',
+    avatar: null
+  };
+};
+
+// ============= MOCK DATA =============
 const MOCK_TICKETS = [
   {
     id: 101,
@@ -433,10 +475,27 @@ function UserHeader({ user }) {
 
 // ============= MAIN PROFILE PAGE =============
 export default function Profile() {
-  const [user] = useState(MOCK_USER);
+  const navigate = useNavigate();
+  
+  // Get user from JWT token
+  const [user, setUser] = useState(null);
   const [tickets] = useState(MOCK_TICKETS);
   const [subscriptions] = useState(MOCK_SUBSCRIPTIONS);
   const [selectedTicket, setSelectedTicket] = useState(null);
+
+  useEffect(() => {
+    const userData = getUserFromToken();
+    
+    if (!userData) {
+      // No valid token found, redirect to login
+      console.warn('No valid authentication found, redirecting to login');
+      navigate('/');
+      return;
+    }
+    
+    setUser(userData);
+    console.log('User loaded from JWT:', userData);
+  }, [navigate]);
 
   // Action handlers
   const handleViewTicket = (ticket) => {
@@ -453,12 +512,12 @@ export default function Profile() {
     // POST /api/tickets/{ticket.id}/refund
     alert(`Refund requested for ticket #${ticket.id}`);
   };
-const navigate = useNavigate();
+
   const handleModifyTicket = (ticket) => {
     console.log('Modifying ticket:', ticket);
     // TODO: Navigate to ticket modification page
     // navigate(`/tickets/${ticket.id}/modify`);
-    alert(`Modify ticket #${ticket.id} `);
+    alert(`Modify ticket #${ticket.id}`);
     navigate(`/tickets/${ticket.id}/modify`, { state: { ticket } });
   };
 
@@ -466,14 +525,23 @@ const navigate = useNavigate();
     console.log('Cancelling subscription:', subscription);
     // TODO: Send cancellation request
     // POST /api/subscriptions/{subscription.id}/cancel
-const userConfirmed = window.confirm(
-  `Are you sure you want to cancel your ${subscription.type}?`
-);
+    const userConfirmed = window.confirm(
+      `Are you sure you want to cancel your ${subscription.type}?`
+    );
 
-if (userConfirmed) {
-  alert(`${subscription.type} cancelled successfully`);
-}
+    if (userConfirmed) {
+      alert(`${subscription.type} cancelled successfully`);
+    }
   };
+
+  // Show loading state while checking authentication
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-900 flex items-center justify-center">
+        <div className="text-white text-xl">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-900 relative overflow-hidden">

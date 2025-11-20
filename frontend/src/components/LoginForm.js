@@ -1,20 +1,49 @@
 import React, { useState } from 'react';
 import { Bus, Mail, Lock, ArrowRight, MapPin } from 'lucide-react';
 import { useNavigate } from "react-router-dom";
+
 export default function LoginForm({ onLogin }) {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(''); // reused as username visually
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate(); 
+  const [errorMsg, setErrorMsg] = useState("");
+  const navigate = useNavigate();
+
   const handleSubmit = async () => {
     setIsLoading(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
-      console.log('Login attempted with:', { email, password });
-    }, 1500);
-    onLogin({ email });
+    setErrorMsg("");
+
+    try {
+      const response = await fetch("http://localhost:8084/api/auth/login", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          username: email,       // 🔥 backend expects username
+          password: password,
+          remember_me: rememberMe
+        })
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.message || "Login failed");
+      }
+
+      const data = await response.json();
+      console.log("Logged in:", data);
+
+      onLogin(data);
+      navigate("/");
+
+    } catch (error) {
+      setErrorMsg(error.message);
+    }
+
+    setIsLoading(false);
   };
 
   const handleKeyPress = (e) => {
@@ -30,10 +59,8 @@ export default function LoginForm({ onLogin }) {
         <div className="absolute top-20 left-10 w-72 h-72 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
         <div className="absolute top-40 right-10 w-72 h-72 bg-indigo-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse delay-75"></div>
         <div className="absolute -bottom-20 left-1/2 w-72 h-72 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse delay-150"></div>
-
-                <div className="absolute -bottom-20 left-1/2 w-55 h-90 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse delay-150"></div>
+        <div className="absolute -bottom-20 left-1/2 w-55 h-90 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse delay-150"></div>
         <div className="absolute -bottom-50 left-1/2 w-72 h-72 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse delay-150"></div>
-
       </div>
 
       {/* Floating bus route lines */}
@@ -82,22 +109,22 @@ export default function LoginForm({ onLogin }) {
 
           {/* Login Inputs */}
           <div className="space-y-5">
-            {/* Email Input */}
+            {/* Username Input (visual email but used as username internally) */}
             <div className="relative group">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                 <Mail className="h-5 w-5 text-blue-200 group-focus-within:text-white transition-colors" />
               </div>
               <input
-                type="email"
+                type="text"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Email address"
+                placeholder="Username"
                 className="w-full pl-12 pr-4 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-300 backdrop-blur-sm"
               />
             </div>
 
-            {/* Password Input */}
+            {/* Password */}
             <div className="relative group">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                 <Lock className="h-5 w-5 text-blue-200 group-focus-within:text-white transition-colors" />
@@ -112,11 +139,18 @@ export default function LoginForm({ onLogin }) {
               />
             </div>
 
+            {/* Error Message */}
+            {errorMsg && (
+              <p className="text-red-300 text-sm text-center -mt-3">{errorMsg}</p>
+            )}
+
             {/* Remember Me & Forgot Password */}
             <div className="flex items-center justify-between text-sm">
               <label className="flex items-center cursor-pointer group">
                 <input
                   type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
                   className="w-4 h-4 rounded border-white/20 bg-white/10 text-blue-500 focus:ring-2 focus:ring-blue-400 focus:ring-offset-0"
                 />
                 <span className="ml-2 text-blue-100 group-hover:text-white transition-colors">Remember me</span>
@@ -124,7 +158,7 @@ export default function LoginForm({ onLogin }) {
               <button className="text-blue-100 hover:text-white transition-colors">Forgot password?</button>
             </div>
 
-            {/* Submit Button */}
+            {/* Submit */}
             <button
               onClick={handleSubmit}
               disabled={isLoading || !email || !password}
@@ -158,11 +192,10 @@ export default function LoginForm({ onLogin }) {
         <button
   type="button"
   onClick={() => navigate("/register")}
-  className="w-full bg-white/10 backdrop-blur-sm text-white font-semibold py-4 rounded-xl hover:bg-white/20 focus:outline-none focus:ring-4 focus:ring-white/30 transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 border border-white/20"
+    className="w-full bg-white/10 backdrop-blur-sm text-white font-semibold py-4 rounded-xl hover:bg-white/20 focus:outline-none focus:ring-4 focus:ring-white/30 transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 border border-white/20"
 >
   Create an account
-    </button>
-
+</button>
 
           {/* Footer Info */}
           <div className="mt-6 flex items-center justify-center text-sm text-blue-100">
@@ -181,3 +214,5 @@ export default function LoginForm({ onLogin }) {
     </div>
   );
 }
+
+
