@@ -1,16 +1,24 @@
 package ma.ensias.soa.subscription_service.service;
 
-import ma.ensias.soa.subscription_service.dto.*;
-import ma.ensias.soa.subscription_service.Enums.*;
-import ma.ensias.soa.subscription_service.kafka.SubscriptionEventProducer;
-import ma.ensias.soa.subscription_service.entity.*;
-import ma.ensias.soa.subscription_service.repository.*;
-import ma.ensias.soa.subscription_service.client.*;
-
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
+
+import org.springframework.stereotype.Service;
+
+import lombok.RequiredArgsConstructor;
+import ma.ensias.soa.subscription_service.Enums.PaymentStatus;
+import ma.ensias.soa.subscription_service.Enums.PlanType;
+import ma.ensias.soa.subscription_service.Enums.SubscriptionEventType;
+import ma.ensias.soa.subscription_service.Enums.SubscriptionStatus;
+import ma.ensias.soa.subscription_service.client.PaymentClient;
+import ma.ensias.soa.subscription_service.client.UserClient;
+import ma.ensias.soa.subscription_service.dto.PaymentRequestDTO;
+import ma.ensias.soa.subscription_service.dto.PaymentResponseDTO;
+import ma.ensias.soa.subscription_service.dto.SubscriptionEvent;
+import ma.ensias.soa.subscription_service.dto.UserDTO;
+import ma.ensias.soa.subscription_service.entity.Subscription;
+import ma.ensias.soa.subscription_service.kafka.SubscriptionEventProducer;
+import ma.ensias.soa.subscription_service.repository.SubscriptionRepository;
 
 
 @Service
@@ -74,6 +82,7 @@ public class SubscriptionService {
 
         return saved;
     }
+
 
     public List<Subscription> getUserSubscriptions(Long userId) {
         return repository.findAllByUserId(userId);

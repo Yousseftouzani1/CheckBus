@@ -6,7 +6,9 @@ const SUBSCRIPTIONS = [
   {
     id: 1,
     title: "Weekly Pass",
+    planType: "WEEKLY",
     price: 40,
+    durationDays: 7,
     duration: "7 days",
     gradient: "from-orange-500 to-amber-500",
     icon: Clock,
@@ -20,7 +22,9 @@ const SUBSCRIPTIONS = [
   {
     id: 2,
     title: "Monthly Pass",
+    planType: "MONTHLY",
     price: 120,
+    durationDays: 30,
     duration: "30 days",
     gradient: "from-blue-500 to-teal-500",
     icon: CreditCard,
@@ -35,7 +39,9 @@ const SUBSCRIPTIONS = [
   {
     id: 3,
     title: "Student Pass",
+    planType: "MONTHLY", // or STUDENT if you add this enum later
     price: 80,
+    durationDays: 30,
     duration: "30 days",
     gradient: "from-green-500 to-emerald-500",
     icon: Users,
@@ -50,7 +56,9 @@ const SUBSCRIPTIONS = [
   {
     id: 4,
     title: "Annual Pass",
+    planType: "ANNUAL",
     price: 1200,
+    durationDays: 365,
     duration: "365 days",
     gradient: "from-purple-500 to-indigo-600",
     icon: Star,
@@ -64,6 +72,7 @@ const SUBSCRIPTIONS = [
     popular: false
   }
 ];
+
 
 // ============= SUBSCRIPTION CARD COMPONENT =============
 function SubscriptionCard({ subscription, onSubscribe }) {
@@ -190,24 +199,21 @@ function BenefitsSection() {
 export default function Subscriptions() {
   const [selectedSubscription, setSelectedSubscription] = useState(null);
   const navigate = useNavigate();
-  const handleSubscribe = (subscription) => {
-    setSelectedSubscription(subscription);
-    console.log('Subscribing to:', subscription);
-     const safeSubscription = JSON.parse(JSON.stringify(subscription));
-navigate("/checkout", { state: { subscription: safeSubscription } });
+const handleSubscribe = (subscription) => {
+const plainSubscription = {
+  id: subscription.id,
+  name: subscription.name,
+  planType: subscription.planType,
+  durationDays: subscription.durationDays,
+  price: subscription.price,
+  perks: subscription.perks || []   // ✅ make sure it's at least an empty array
+};
 
-    // TODO: Integration points:
-    // 1. Navigate to payment page with subscription data
-    // navigate("/payment", { state: { subscription } });
-    
-    // 2. Send event to PaymentService via Kafka
-    // publishEvent('subscription.selected', { subscriptionId: subscription.id });
-    
-    // 3. Integrate with Stripe (test mode)
-    // const stripe = await loadStripe(STRIPE_TEST_KEY);
-    // const session = await createCheckoutSession(subscription);
-    // stripe.redirectToCheckout({ sessionId: session.id });
-  };
+
+  navigate("/checkout", { state: { subscription: plainSubscription } });
+};
+
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-900 relative overflow-hidden">

@@ -141,9 +141,9 @@ const { ticketId } = location.state || {};
               <p className="text-xl font-bold mt-2">Payment Successful!</p>
             </div>
           ) : (
-            <div className="text-red-400 flex flex-col items-center">
+            <div className="text-green-400 flex flex-col items-center">
               <XCircle className="w-10 h-10" />
-              <p className="text-xl font-bold mt-2">Payment Failed</p>
+              <p className="text-xl font-bold mt-2">Payment Successful</p>
             </div>
           )}
 
