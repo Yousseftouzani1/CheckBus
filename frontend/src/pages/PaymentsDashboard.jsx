@@ -3,7 +3,65 @@ import {
   CreditCard, CheckCircle, XCircle, AlertCircle, Wallet, TrendingUp,
   MapPin, ArrowRight, Calendar, DollarSign, Ticket, ShoppingBag
 } from 'lucide-react';
+import { useNavigate } from "react-router-dom";
 
+
+
+
+// ============= JWT HELPER FUNCTIONS =============
+const getCookie = (name) => {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return null;
+};
+
+const parseJwt = (token) => {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    return JSON.parse(jsonPayload);
+  } catch (error) {
+    console.error('Error parsing JWT:', error);
+    return null;
+  }
+};
+
+const getUserFromToken = () => {
+  const token = getCookie('jwt') || getCookie('token') || getCookie('authToken');
+  
+  if (!token) {
+    console.warn('No JWT token found in cookies');
+    return null;
+  }
+
+  const payload = parseJwt(token);
+  
+  if (!payload) {
+    console.warn('Could not parse JWT token');
+    return null;
+  }
+
+  // Extract user info from common JWT claim names
+  return {
+    name: payload.name || payload.username || payload.sub || 'User',
+    email: payload.email || payload.mail || 'user@example.com',
+    userId: payload.userId || payload.id || payload.sub || 35,
+    memberSince: payload.iat 
+      ? new Date(payload.iat * 1000).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+      : 'Recently',
+    avatar: null
+  };
+};
+
+
+const user = getUserFromToken()
 // ===============================================================
 //                    MOCK FALLBACK DATA
 // ===============================================================
@@ -47,11 +105,12 @@ const MOCK_RECENT_PAYMENTS = [
 // ===============================================================
 //                    PAYMENTS DASHBOARD PAGE
 // ===============================================================
-export default function PaymentsDashboard({ userId = 35 }) {
+export default function PaymentsDashboard({ userId = user.userId }) {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(MOCK_STATS);
   const [favoriteRoutes, setFavoriteRoutes] = useState(MOCK_FAVORITE_ROUTES);
   const [recentPayments, setRecentPayments] = useState(MOCK_RECENT_PAYMENTS);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -402,14 +461,18 @@ setRecentPayments(formattedPayments);
             =============================================================== */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-<button className="bg-gradient-to-r from-purple-500 to-violet-600 text-white font-bold py-6 rounded-2xl shadow-2xl hover:from-purple-600 hover:to-violet-700 hover:scale-105 transition-all flex items-center justify-center">
+<button 
+onClick={() => navigate('/buy-ticket')}
+className="bg-gradient-to-r from-purple-500 to-violet-600 text-white font-bold py-6 rounded-2xl shadow-2xl hover:from-purple-600 hover:to-violet-700 hover:scale-105 transition-all flex items-center justify-center">
   <ShoppingBag className="w-6 h-6 mr-3" />
   Buy New Ticket
   <ArrowRight className="w-6 h-6 ml-3" />
 </button>
 
 
-            <button className="bg-white/10 border-2 border-white/20 text-white font-bold py-6 rounded-2xl hover:scale-105 transition-all flex items-center justify-center backdrop-blur-sm">
+            <button 
+            onClick={() => navigate('/profile')}
+            className="bg-white/10 border-2 border-white/20 text-white font-bold py-6 rounded-2xl hover:scale-105 transition-all flex items-center justify-center backdrop-blur-sm">
               <Ticket className="w-6 h-6 mr-3" />
               View My Tickets
               <ArrowRight className="w-6 h-6 ml-3" />

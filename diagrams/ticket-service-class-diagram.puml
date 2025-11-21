@@ -1,0 +1,320 @@
+@startuml Ticket Service Class Diagram
+
+package "ma.ensias.soa.ticketservice" {
+    
+    ' ========== ENTITIES ==========
+    class Ticket {
+        -Long id
+        -long userId
+        -Long tripId
+        -String seatcode
+        -TicketStatus status
+        -double price
+        -Timestamp createdAt
+        -Timestamp updatedAt
+        -String qr_code
+        -Timestamp reservation_Time
+        -List<PaymentInfo> payments
+    }
+    
+    class TicketHistory {
+        -Long id
+        -Ticket ticket
+        -TicketStatus previousStatus
+        -TicketStatus newStatus
+        -Timestamp changedAt
+        -String changedBy
+        -boolean archived
+    }
+    
+    class PaymentInfo {
+        -Long id
+        -Ticket ticket
+        -String paymentReference
+        -Double price
+        -String method
+        -Timestamp confirmedAt
+        -Timestamp lastUpdate
+        -PaymentStatus status
+    }
+    
+    ' ========== ENUMS ==========
+    enum TicketStatus {
+        RESERVED
+        PAID
+        VALIDATED
+        EXPIRED
+        CANCELLED
+        FREE
+        CHANGED
+    }
+    
+    enum PaymentStatus {
+        PENDING
+        SUCCESS
+        FAILED
+        REFUNDED
+    }
+    
+    ' ========== DTOs ==========
+    class TicketRequestDTO {
+        -Long userId
+        -Long tripId
+        -String seatcode
+        -double price
+    }
+    
+    class TicketResponseDTO {
+        -Long id
+        -Long userId
+        -Long tripId
+        -String seatcode
+        -TicketStatus status
+        -double price
+        -Timestamp createdAt
+        -String qr_code
+    }
+    
+    class TicketHistoryDTO {
+        -Long id
+        -Long ticketId
+        -TicketStatus previousStatus
+        -TicketStatus newStatus
+        -Timestamp changedAt
+        -String changedBy
+    }
+    
+    class PaymentInfoDTO {
+        -Long id
+        -String paymentReference
+        -Double price
+        -String method
+        -PaymentStatus status
+    }
+    
+    class PaymentRequestDTO {
+        -Long ticketId
+        -Double amount
+        -String method
+        -Timestamp createdAt
+    }
+    
+    class PaymentResponseDTO {
+        -String paymentReference
+        -PaymentStatus status
+        -String message
+    }
+    
+    class PaymentEventDTO {
+        -Long ticketId
+        -String paymentReference
+        -Double amount
+        -PaymentStatus status
+        -Timestamp confirmedAt
+    }
+    
+    class TicketExpirationEvent {
+        -Long ticketId
+        -long expirationTime
+    }
+    
+    class RefundRequestDTO {
+        -String paymentReference
+    }
+    
+    class TrajetDTO {
+        -Long id
+        -String ligneCode
+        -String depart
+        -String arrivee
+        -List<String> arrets
+        -double distanceKm
+        -boolean active
+    }
+    
+    ' ========== CONTROLLERS ==========
+    class TicketController {
+        +reserveTicket(TicketRequestDTO): ResponseEntity<TicketResponseDTO>
+        +buyTicket(Long, String): ResponseEntity<TicketResponseDTO>
+        +changeTicket(Long, TicketRequestDTO): ResponseEntity<TicketResponseDTO>
+        +cancelTicket(Long): ResponseEntity<TicketResponseDTO>
+        +getTicketsByUser(Long): ResponseEntity<List<TicketResponseDTO>>
+        +getTicketsByTrip(Long): ResponseEntity<List<TicketResponseDTO>>
+    }
+    
+    class TicketHistoryController {
+        +getTicketHistory(Long): ResponseEntity<List<TicketHistoryDTO>>
+    }
+    
+    class PaymentInfoController {
+        +getPaymentInfo(Long): ResponseEntity<List<PaymentInfoDTO>>
+    }
+    
+    ' ========== SERVICES ==========
+    class TicketService {
+        -TrajetClient trajetClient
+        -TicketRepository repo
+        -TicketMapper TicketMapper
+        -TicketHistoryService ticketHistoryService
+        -PaymentClient paymentClient
+        -RefundProducer refundProducer
+        -TicketExpirationProducer ticketExpirationProducer
+        +reserveTicket(TicketRequestDTO): TicketResponseDTO
+        +buyTicket(Long, String): TicketResponseDTO
+        +changeTicket(Long, TicketRequestDTO): TicketResponseDTO
+        +abortTicket(Long): TicketResponseDTO
+        +getTicketsByUserId(Long): List<TicketResponseDTO>
+        +getTicketsByTripId(Long): List<TicketResponseDTO>
+    }
+    
+    class TicketHistoryService {
+        -TicketHistoryRepository historyRepository
+        -TicketHistoryMapper mapper
+        +recordStatusChange(Ticket, TicketStatus, TicketStatus, String): void
+        +getTicketHistory(Long): List<TicketHistoryDTO>
+    }
+    
+    class PaymentInfoService {
+        -PaymentInfoRepository paymentInfoRepository
+        -PaymentInfoMapper mapper
+        +savePaymentInfo(PaymentInfoDTO): PaymentInfo
+        +getPaymentInfoByTicketId(Long): List<PaymentInfoDTO>
+    }
+    
+    ' ========== REPOSITORIES ==========
+    interface TicketRepository {
+        +findById(Long): Optional<Ticket>
+        +findByUserId(Long): List<Ticket>
+        +findByStatus(TicketStatus): List<Ticket>
+        +findByTripId(Long): List<Ticket>
+        +findByTripIdAndSeatcode(Long, String): Ticket
+        +save(Ticket): Ticket
+    }
+    
+    interface TicketHistoryRepository {
+        +findByTicketId(Long): List<TicketHistory>
+        +save(TicketHistory): TicketHistory
+    }
+    
+    interface PaymentInfoRepository {
+        +findByTicketId(Long): List<PaymentInfo>
+        +save(PaymentInfo): PaymentInfo
+    }
+    
+    ' ========== MAPPERS ==========
+    class TicketMapper {
+        +toEntity(TicketRequestDTO): Ticket
+        +toDto(Ticket): TicketResponseDTO
+    }
+    
+    class TicketHistoryMapper {
+        +toDto(TicketHistory): TicketHistoryDTO
+    }
+    
+    class PaymentInfoMapper {
+        +toEntity(PaymentInfoDTO): PaymentInfo
+        +toDto(PaymentInfo): PaymentInfoDTO
+    }
+    
+    ' ========== CLIENTS ==========
+    class PaymentClient {
+        +processPayment(PaymentRequestDTO): PaymentResponseDTO
+        +processRefund(RefundRequestDTO): PaymentResponseDTO
+    }
+    
+    class TrajetClient {
+        +getTrajetById(Long): TrajetDTO
+    }
+    
+    ' ========== KAFKA ==========
+    class TicketExpirationProducer {
+        +sendExpirationEvent(TicketExpirationEvent): void
+    }
+    
+    class TicketExpirationConsumer {
+        +consumeExpirationEvent(TicketExpirationEvent): void
+    }
+    
+    class RefundProducer {
+        +sendRefundRequest(RefundRequestDTO): void
+    }
+    
+    class PaymentEventListener {
+        +handlePaymentEvent(PaymentEventDTO): void
+    }
+    
+    ' ========== EXCEPTIONS ==========
+    class TicketNotFoundException {
+        +String message
+    }
+    
+    class NoSeatsAvailableException {
+        +String message
+    }
+    
+    class OccupiedSeatException {
+        +String message
+    }
+    
+    class UnChangeableException {
+        +String message
+    }
+    
+    class PayementFailedException {
+        +String message
+    }
+    
+    ' ========== CONFIG ==========
+    class KafkaConfig {
+        +kafkaTemplate(): KafkaTemplate
+    }
+    
+    class RestTemplateConfig {
+        +restTemplate(): RestTemplate
+    }
+    
+    class CorsConfig {
+        +corsFilter(): CorsFilter
+    }
+    
+    ' ========== RELATIONSHIPS ==========
+    TicketController --> TicketService
+    TicketHistoryController --> TicketHistoryService
+    PaymentInfoController --> PaymentInfoService
+    TicketService --> TicketRepository
+    TicketService --> TicketMapper
+    TicketService --> TrajetClient
+    TicketService --> PaymentClient
+    TicketService --> TicketHistoryService
+    TicketService --> TicketExpirationProducer
+    TicketService --> RefundProducer
+    TicketHistoryService --> TicketHistoryRepository
+    TicketHistoryService --> TicketHistoryMapper
+    PaymentInfoService --> PaymentInfoRepository
+    PaymentInfoService --> PaymentInfoMapper
+    TicketRepository ..> Ticket
+    TicketHistoryRepository ..> TicketHistory
+    PaymentInfoRepository ..> PaymentInfo
+    Ticket --> TicketStatus
+    TicketHistory --> TicketStatus
+    PaymentInfo --> PaymentStatus
+    Ticket --> PaymentInfo : "1..*"
+    TicketHistory --> Ticket : "many-to-one"
+    PaymentInfo --> Ticket : "many-to-one"
+    TicketExpirationConsumer ..> TicketExpirationEvent
+    PaymentEventListener ..> PaymentEventDTO
+    
+    note right of Ticket
+        Main entity for
+        bus tickets
+    end note
+    
+    note right of TicketService
+        Core business logic
+        for ticket management
+    end note
+
+}
+
+@enduml
+

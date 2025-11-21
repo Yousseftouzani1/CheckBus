@@ -54,15 +54,15 @@ const getUserFromToken = () => {
   };
 };
 
-// ============= API FUNCTIONS =============
+// ============= API FUNCTION =============
 const fetchUserTickets = async (userId) => {
   try {
-    const response = await fetch(`http://localhost:8081/api/tickets/user/35`, {
+    const response = await fetch(`http://localhost:8081/api/tickets/user/${userId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
       },
-      credentials: 'include' // Important: includes cookies in request
+      credentials: 'include'
     });
 
     if (!response.ok) {
@@ -103,6 +103,19 @@ const MOCK_SUBSCRIPTIONS = [
 function TicketDetailsModal({ ticket, onClose, onModify, onRefund, onPay, onUnreserve }) {
   if (!ticket) return null;
 
+  const formatDate = (timestamp) => {
+    if (!timestamp) return 'N/A';
+    const date = new Date(timestamp);
+    return date.toLocaleString('en-US', { 
+      weekday: 'short',
+      month: 'short', 
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
       <div className="relative bg-white/10 backdrop-blur-xl rounded-3xl border border-white/20 shadow-2xl p-8 max-w-md w-full animate-slide-up">
@@ -129,34 +142,73 @@ function TicketDetailsModal({ ticket, onClose, onModify, onRefund, onPay, onUnre
           <div className="bg-white/5 rounded-xl p-4">
             <div className="flex items-center space-x-3 mb-3">
               <Bus className="w-5 h-5 text-blue-300" />
-              <span className="text-white font-semibold">Bus {ticket.busNumber}</span>
+              <span className="text-white font-semibold">Trip #{ticket.tripId}</span>
             </div>
 
-            <div className="flex items-center justify-between text-sm">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="text-blue-200 text-sm">Seat</div>
+                <div className="text-white font-semibold">{ticket.seatcode}</div>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div className="text-blue-200 text-sm">Price</div>
+                <div className="text-white font-bold text-lg">{ticket.price} MAD</div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="text-blue-200 text-sm">Status</div>
+                <div className={`px-2 py-1 rounded-lg text-xs font-semibold ${
+                  ticket.status === 'PAID' 
+                    ? 'bg-green-500/20 text-green-200' 
+                    : ticket.status === 'RESERVED'
+                    ? 'bg-blue-500/20 text-blue-200'
+                    : 'bg-red-500/20 text-red-200'
+                }`}>
+                  {ticket.status}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white/5 rounded-xl p-4 space-y-2">
+            <div className="flex items-center space-x-2 text-blue-200 text-sm">
+              <Calendar className="w-4 h-4" />
               <div>
-                <div className="text-blue-200 mb-1">From</div>
-                <div className="text-white font-semibold">{ticket.from}</div>
-                <div className="text-blue-300 text-xs">{ticket.departure}</div>
-              </div>
-              <ArrowRight className="w-5 h-5 text-blue-400" />
-              <div className="text-right">
-                <div className="text-blue-200 mb-1">To</div>
-                <div className="text-white font-semibold">{ticket.to}</div>
-                <div className="text-blue-300 text-xs">{ticket.arrival}</div>
+                <div className="text-xs text-blue-300">Booked on</div>
+                <div className="text-white font-medium">{formatDate(ticket.createdAt)}</div>
               </div>
             </div>
+
+            {ticket.reservation_Time && (
+              <div className="flex items-center space-x-2 text-blue-200 text-sm pt-2 border-t border-white/10">
+                <Clock className="w-4 h-4" />
+                <div>
+                  <div className="text-xs text-blue-300">Reserved on</div>
+                  <div className="text-white font-medium">{formatDate(ticket.reservation_Time)}</div>
+                </div>
+              </div>
+            )}
+
+            {ticket.updatedAt && ticket.updatedAt !== ticket.createdAt && (
+              <div className="flex items-center space-x-2 text-blue-200 text-sm pt-2 border-t border-white/10">
+                <RefreshCw className="w-4 h-4" />
+                <div>
+                  <div className="text-xs text-blue-300">Last updated</div>
+                  <div className="text-white font-medium">{formatDate(ticket.updatedAt)}</div>
+                </div>
+              </div>
+            )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-white/5 rounded-xl p-3">
-              <div className="text-blue-200 text-xs mb-1">Seat</div>
-              <div className="text-white font-bold text-lg">{ticket.seat}</div>
+          {ticket.qr_code && (
+            <div className="bg-white/5 rounded-xl p-4 text-center">
+              <div className="text-blue-200 text-xs mb-2">QR Code</div>
+              <div className="bg-white p-2 rounded-lg inline-block">
+                <div className="text-xs text-gray-800 font-mono break-all">{ticket.qr_code}</div>
+              </div>
             </div>
-            <div className="bg-white/5 rounded-xl p-3">
-              <div className="text-blue-200 text-xs mb-1">Price</div>
-              <div className="text-white font-bold text-lg">{ticket.price}</div>
-            </div>
-          </div>
+          )}
         </div>
 
         {/* ACTION BUTTONS */}
@@ -225,6 +277,19 @@ function TicketCard({ ticket, onViewDetails, onRefund, onPay, onUnreserve }) {
         return "bg-gray-500/20 text-gray-200 border-gray-400/30";
     }
   };
+  const navigate = useNavigate();
+
+  const formatDate = (timestamp) => {
+    if (!timestamp) return 'N/A';
+    const date = new Date(timestamp);
+    return date.toLocaleString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
+  };
+  const ticketId = ticket.id;
 
   return (
     <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20 shadow-xl hover:bg-white/15 hover:scale-[1.02] transition-all duration-300 group">
@@ -236,7 +301,7 @@ function TicketCard({ ticket, onViewDetails, onRefund, onPay, onUnreserve }) {
             <Ticket className="w-5 h-5 text-white" strokeWidth={2.5} />
           </div>
           <div>
-            <div className="text-white font-bold">Bus {ticket.busNumber}</div>
+            <div className="text-white font-bold">Trip #{ticket.tripId}</div>
             <div className="text-blue-200 text-xs">Ticket #{ticket.id}</div>
           </div>
         </div>
@@ -246,18 +311,33 @@ function TicketCard({ ticket, onViewDetails, onRefund, onPay, onUnreserve }) {
         </div>
       </div>
 
-      {/* Route */}
-      <div className="mb-4">
-        <div className="flex items-center space-x-2 text-blue-100 text-sm mb-2">
-          <MapPin className="w-4 h-4" />
-          <span>{ticket.from} → {ticket.to}</span>
+      {/* Ticket Info */}
+      <div className="space-y-3 mb-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2 text-blue-100 text-sm">
+            <MapPin className="w-4 h-4" />
+            <span>Seat: {ticket.seatcode}</span>
+          </div>
+          <div className="text-white font-bold text-lg">{ticket.price} MAD</div>
         </div>
+
+        {ticket.createdAt && (
+          <div className="flex items-center space-x-2 text-blue-200 text-xs">
+            <Calendar className="w-3 h-3" />
+            <span>Booked: {formatDate(ticket.createdAt)}</span>
+          </div>
+        )}
+
+        {ticket.reservation_Time && ticket.status === "RESERVED" && (
+          <div className="flex items-center space-x-2 text-yellow-200 text-xs">
+            <Clock className="w-3 h-3" />
+            <span>Reserved: {formatDate(ticket.reservation_Time)}</span>
+          </div>
+        )}
       </div>
 
       {/* Footer */}
       <div className="flex items-center justify-between pt-4 border-t border-white/10">
-
-        <div className="text-white font-bold text-lg">{ticket.price}</div>
 
         <div className="flex space-x-2">
 
@@ -273,7 +353,7 @@ function TicketCard({ ticket, onViewDetails, onRefund, onPay, onUnreserve }) {
           {ticket.status === "RESERVED" && (
             <>
               <button
-                onClick={() => onPay(ticket)}
+                onClick={() => navigate('/payment', { state: { ticketId } })}
                 className="px-3 py-2 bg-blue-500/30 hover:bg-blue-500/50 text-white text-sm rounded-lg transition-all duration-300"
               >
                 Pay

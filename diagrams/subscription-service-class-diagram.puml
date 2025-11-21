@@ -1,0 +1,171 @@
+@startuml Subscription Service Class Diagram
+
+package "ma.ensias.soa.subscription_service" {
+    
+    ' ========== ENTITIES ==========
+    class Subscription {
+        -Long id
+        -Long userId
+        -PlanType planType
+        -double price
+        -LocalDateTime startDate
+        -LocalDateTime endDate
+        -SubscriptionStatus status
+        -boolean autoRenew
+    }
+    
+    ' ========== ENUMS ==========
+    enum PlanType {
+        MONTHLY
+        ANNUAL
+    }
+    
+    enum SubscriptionStatus {
+        PENDING
+        ACTIVE
+        EXPIRED
+        CANCELED
+    }
+    
+    enum SubscriptionEventType {
+        SUBSCRIPTION_CREATED
+        SUBSCRIPTION_RENEWED
+        SUBSCRIPTION_CANCELED
+        SUBSCRIPTION_EXPIRED
+    }
+    
+    enum PaymentStatus {
+        PENDING
+        SUCCESS
+        FAILED
+        REFUNDED
+    }
+    
+    ' ========== DTOs ==========
+    class SubscriptionEvent {
+        -Long subscriptionId
+        -Long userId
+        -String email
+        -PlanType planType
+        -LocalDateTime endDate
+        -SubscriptionEventType eventType
+    }
+    
+    class PaymentRequestDTO {
+        -Long subscriptionId
+        -Long userId
+        -String email
+        -Double amount
+        -PlanType planType
+    }
+    
+    class PaymentResponseDTO {
+        -String paymentReference
+        -PaymentStatus status
+        -String message
+    }
+    
+    class UserDTO {
+        -Long id
+        -String username
+        -String email
+    }
+    
+    ' ========== CONTROLLERS ==========
+    class SubscriptionController {
+        +createSubscription(Long, PlanType, boolean): ResponseEntity<Subscription>
+        +getByUser(Long): ResponseEntity<List<Subscription>>
+        +cancelAutoRenew(Long): ResponseEntity<Subscription>
+        +cancelSubscription(Long): ResponseEntity<Subscription>
+    }
+    
+    ' ========== SERVICES ==========
+    class SubscriptionService {
+        -SubscriptionRepository repository
+        -UserClient userClient
+        -PaymentClient paymentClient
+        -SubscriptionEventProducer eventProducer
+        -int MONTHLY_AMMOUNT
+        -int YEARLY_AMMOUNT
+        +createSubscription(Long, PlanType, boolean): Subscription
+        +getUserSubscriptions(Long): List<Subscription>
+        +cancelAutoRenew(Long): Subscription
+        +cancelSubscription(Long): Subscription
+    }
+    
+    class SubscriptionScheduler {
+        +checkExpiredSubscriptions(): void
+        +processAutoRenewals(): void
+    }
+    
+    ' ========== REPOSITORIES ==========
+    interface SubscriptionRepository {
+        +findById(Long): Optional<Subscription>
+        +findAllByUserId(Long): List<Subscription>
+        +save(Subscription): Subscription
+        +delete(Subscription): void
+    }
+    
+    ' ========== CLIENTS ==========
+    class UserClient {
+        +getUserById(Long): UserDTO
+    }
+    
+    class PaymentClient {
+        +processPayment(PaymentRequestDTO): PaymentResponseDTO
+    }
+    
+    ' ========== KAFKA ==========
+    class SubscriptionEventProducer {
+        +publishEvent(SubscriptionEvent): void
+    }
+    
+    ' ========== CONFIG ==========
+    class KafkaConfig {
+        +kafkaTemplate(): KafkaTemplate
+    }
+    
+    class RestTemplateConfig {
+        +restTemplate(): RestTemplate
+    }
+    
+    class CorsConfig {
+        +corsFilter(): CorsFilter
+    }
+    
+    ' ========== RELATIONSHIPS ==========
+    SubscriptionController --> SubscriptionService
+    SubscriptionService --> SubscriptionRepository
+    SubscriptionService --> UserClient
+    SubscriptionService --> PaymentClient
+    SubscriptionService --> SubscriptionEventProducer
+    SubscriptionRepository ..> Subscription
+    Subscription --> PlanType
+    Subscription --> SubscriptionStatus
+    SubscriptionEvent --> PlanType
+    SubscriptionEvent --> SubscriptionEventType
+    UserClient ..> UserDTO
+    PaymentClient ..> PaymentRequestDTO
+    PaymentClient ..> PaymentResponseDTO
+    SubscriptionEventProducer ..> SubscriptionEvent
+    SubscriptionScheduler --> SubscriptionRepository
+    
+    note right of Subscription
+        Entity representing
+        user subscriptions
+    end note
+    
+    note right of SubscriptionService
+        Manages subscription
+        lifecycle and payments
+    end note
+    
+    note right of SubscriptionScheduler
+        Scheduled tasks for
+        expiration and renewals
+    end note
+
+}
+
+@enduml
+

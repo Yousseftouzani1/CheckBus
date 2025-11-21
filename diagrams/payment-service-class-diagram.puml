@@ -1,0 +1,158 @@
+@startuml Payment Service Class Diagram
+
+package "ma.ensias.soa.paymentservice" {
+    
+    ' ========== ENTITIES ==========
+    class Payment {
+        -Long id
+        -Long ticketId
+        -Long subscription_id
+        -Double amount
+        -String method
+        -PaymentStatus status
+        -String paymentReference
+        -Timestamp createdAt
+        -Timestamp updatedAt
+    }
+    
+    ' ========== ENUMS ==========
+    enum PaymentStatus {
+        PENDING
+        SUCCESS
+        FAILED
+        REFUNDED
+    }
+    
+    enum PlanType {
+        MONTHLY
+        ANNUAL
+    }
+    
+    ' ========== DTOs ==========
+    class PaymentRequestDTO {
+        -Long ticketId
+        -Double amount
+        -String method
+        -Timestamp createdAt
+    }
+    
+    class PaymentRequestSubDTO {
+        -Long subscriptionId
+        -Long userId
+        -String email
+        -Double amount
+        -PlanType planType
+    }
+    
+    class PaymentResponseDTO {
+        -String paymentReference
+        -PaymentStatus status
+        -String message
+    }
+    
+    class PaymentEventDTO {
+        -Long ticketId
+        -String paymentReference
+        -Double amount
+        -PaymentStatus status
+        -Timestamp confirmedAt
+    }
+    
+    class RefundRequestDTO {
+        -String paymentReference
+    }
+    
+    ' ========== CONTROLLERS ==========
+    class PaymentController {
+        +processPayment(PaymentRequestDTO): ResponseEntity<PaymentResponseDTO>
+        +processSub(PaymentRequestSubDTO): ResponseEntity<PaymentResponseDTO>
+        +refundPayment(RefundRequestDTO): ResponseEntity<PaymentResponseDTO>
+        +getPaymentsByTicket(Long): ResponseEntity<List<Payment>>
+        +getSuccessfulPayments(): ResponseEntity<List<Payment>>
+    }
+    
+    ' ========== SERVICES ==========
+    class PaymentService {
+        -PaymentRepository paymentRepository
+        -PayementMapper Mapper
+        -PaymentEventProducer eventProducer
+        -String stripeSecretKey
+        -String currency
+        +processPayment(PaymentRequestDTO): PaymentResponseDTO
+        +processPayment(PaymentRequestSubDTO): PaymentResponseDTO
+        +processRefund(RefundRequestDTO): PaymentResponseDTO
+        +getPaymentsByTicketId(Long): List<Payment>
+        +getSuccessfulPayments(): List<Payment>
+    }
+    
+    ' ========== REPOSITORIES ==========
+    interface PaymentRepository {
+        +findById(Long): Optional<Payment>
+        +findByTicketId(Long): Payment
+        +findByPaymentReference(String): Optional<Payment>
+        +findByTicketIdAndStatus(Long, PaymentStatus): Payment
+        +findAllByTicketId(Long): List<Payment>
+        +findAllByStatus(PaymentStatus): List<Payment>
+        +save(Payment): Payment
+    }
+    
+    ' ========== MAPPERS ==========
+    class PayementMapper {
+        +toEntity(PaymentRequestDTO): Payment
+        +toDto(Payment): PaymentResponseDTO
+    }
+    
+    ' ========== KAFKA ==========
+    class PaymentEventProducer {
+        +sendPaymentEvent(PaymentEventDTO): void
+    }
+    
+    class RefundConsumer {
+        +consumeRefundRequest(RefundRequestDTO): void
+    }
+    
+    ' ========== CONFIG ==========
+    class KafkaConfig {
+        +kafkaTemplate(): KafkaTemplate
+    }
+    
+    class CorsConfig {
+        +corsFilter(): CorsFilter
+    }
+    
+    ' ========== EXTERNAL ==========
+    class Stripe {
+        +PaymentIntent.create(Map): PaymentIntent
+        +PaymentIntent.confirm(): PaymentIntent
+    }
+    
+    ' ========== RELATIONSHIPS ==========
+    PaymentController --> PaymentService
+    PaymentService --> PaymentRepository
+    PaymentService --> PayementMapper
+    PaymentService --> PaymentEventProducer
+    PaymentService ..> Stripe
+    PaymentRepository ..> Payment
+    Payment --> PaymentStatus
+    PaymentEventProducer ..> PaymentEventDTO
+    RefundConsumer ..> RefundRequestDTO
+    
+    note right of Payment
+        Entity representing
+        payment transactions
+    end note
+    
+    note right of PaymentService
+        Handles payment processing
+        via Stripe integration
+    end note
+    
+    note right of Stripe
+        External payment
+        gateway service
+    end note
+
+}
+
+@enduml
+

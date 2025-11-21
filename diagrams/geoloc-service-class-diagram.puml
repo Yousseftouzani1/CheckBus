@@ -1,0 +1,165 @@
+@startuml Geoloc Service Class Diagram
+
+package "ma.ensias.soa.geoloc_service" {
+    
+    ' ========== ENTITIES ==========
+    class BusPosition {
+        -Long id
+        -Long busId
+        -double latitude
+        -double longitude
+        -LocalDateTime timestamp
+        -BusDirection direction
+    }
+    
+    ' ========== ENUMS ==========
+    enum BusDirection {
+        FORWARD
+        BACKWARD
+    }
+    
+    ' ========== DTOs ==========
+    class BusPositionRequestDTO {
+        -Long busId
+        -double latitude
+        -double longitude
+        -BusDirection direction
+        -LocalDateTime timestamp
+    }
+    
+    class BusPositionResponseDTO {
+        -Long busId
+        -double latitude
+        -double longitude
+        -BusDirection direction
+        -LocalDateTime timestamp
+    }
+    
+    ' ========== CONTROLLERS ==========
+    class BusPositionController {
+        +updateBusPosition(BusPositionRequestDTO): ResponseEntity<BusPositionResponseDTO>
+        +getLatestBusPosition(Long): ResponseEntity<BusPositionResponseDTO>
+        +getAllPositionsForBus(Long): ResponseEntity<List<BusPositionResponseDTO>>
+        +getAllPositions(): ResponseEntity<List<BusPositionResponseDTO>>
+    }
+    
+    class GeoSocketController {
+        +updateBusPosition(BusPositionRequestDTO): BusPositionResponseDTO
+    }
+    
+    ' ========== SERVICES ==========
+    class BusPositionService {
+        -BusPositionRepository repository
+        -RedisPositionService redisService
+        -BusPositionEventProducer busPositionEventProducer
+        +saveOrUpdatePosition(BusPositionRequestDTO): BusPositionResponseDTO
+        +getLatestPosition(Long): Optional<BusPositionResponseDTO>
+        +getAllPositionsForBus(Long): List<BusPositionResponseDTO>
+        +getAllPositions(): List<BusPositionResponseDTO>
+    }
+    
+    class RedisPositionService {
+        +savePosition(BusPositionResponseDTO): void
+        +getPosition(Long): Optional<BusPositionResponseDTO>
+        +getAllPositions(): List<BusPositionResponseDTO>
+        +deletePosition(Long): void
+    }
+    
+    class PositionScheduler {
+        -RedisPositionService redisService
+        -BusPositionRepository repository
+        +archivePositions(): void
+    }
+    
+    ' ========== REPOSITORIES ==========
+    interface BusPositionRepository {
+        +findById(Long): Optional<BusPosition>
+        +findByBusId(Long): List<BusPosition>
+        +findTopByBusIdOrderByTimestampDesc(Long): Optional<BusPosition>
+        +save(BusPosition): BusPosition
+        +findAll(): List<BusPosition>
+    }
+    
+    ' ========== KAFKA ==========
+    class BusPositionEventProducer {
+        +publishPositionEvent(BusPositionResponseDTO): void
+    }
+    
+    ' ========== EXCEPTIONS ==========
+    class ResourceNotFoundException {
+        +String message
+    }
+    
+    class BadRequestException {
+        +String message
+    }
+    
+    class ErrorResponse {
+        -String message
+        -int statusCode
+        -LocalDateTime timestamp
+    }
+    
+    class GlobalExceptionHandler {
+        +handleResourceNotFoundException(ResourceNotFoundException): ResponseEntity<ErrorResponse>
+        +handleBadRequestException(BadRequestException): ResponseEntity<ErrorResponse>
+    }
+    
+    ' ========== CONFIG ==========
+    class WebSocketConfig {
+        +registerStompEndpoints(StompEndpointRegistry): void
+        +configureMessageBroker(MessageBrokerRegistry): void
+    }
+    
+    class RedisConfig {
+        +redisTemplate(): RedisTemplate
+        +redisConnectionFactory(): RedisConnectionFactory
+    }
+    
+    class KafkaConfig {
+        +kafkaTemplate(): KafkaTemplate
+    }
+    
+    class CorsConfig {
+        +corsFilter(): CorsFilter
+    }
+    
+    ' ========== RELATIONSHIPS ==========
+    BusPositionController --> BusPositionService
+    GeoSocketController --> BusPositionService
+    BusPositionService --> BusPositionRepository
+    BusPositionService --> RedisPositionService
+    BusPositionService --> BusPositionEventProducer
+    PositionScheduler --> RedisPositionService
+    PositionScheduler --> BusPositionRepository
+    BusPositionRepository ..> BusPosition
+    BusPosition --> BusDirection
+    BusPositionEventProducer ..> BusPositionResponseDTO
+    GlobalExceptionHandler ..> ResourceNotFoundException
+    GlobalExceptionHandler ..> BadRequestException
+    GlobalExceptionHandler ..> ErrorResponse
+    
+    note right of BusPosition
+        Entity representing
+        bus GPS positions
+    end note
+    
+    note right of BusPositionService
+        Manages bus position
+        tracking and caching
+    end note
+    
+    note right of RedisPositionService
+        Redis cache for
+        fast position retrieval
+    end note
+    
+    note right of GeoSocketController
+        WebSocket endpoint
+        for real-time updates
+    end note
+
+}
+
+@enduml
+
