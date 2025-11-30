@@ -369,7 +369,7 @@ function TicketCard({ ticket, onViewDetails, onRefund, onPay, onUnreserve }) {
           )}
 
           {/* Refund */}
-          {ticket.status !== "CANCELLED" && (
+          {(ticket.status !== "CANCELLED" && ticket.status !== "RESERVED") && (
             <button
               onClick={() => onRefund(ticket)}
               className="p-2 bg-red-500/20 hover:bg-red-500/30 text-red-200 rounded-lg transition-all duration-300"
@@ -582,12 +582,32 @@ export default function Profile() {
     setSelectedTicket(null);
   };
 
-  const handleRefundTicket = (ticket) => {
-    console.log('Requesting refund for ticket:', ticket);
-    // TODO: Send refund request to backend
-    // POST /api/tickets/{ticket.id}/refund
-    alert(`Refund requested for ticket #${ticket.id}`);
-  };
+ const handleRefundTicket = async (ticket) => {
+  console.log('Requesting refund for ticket:', ticket);
+
+  try {
+    const response = await fetch(`http://localhost:8081/api/tickets/${ticket.id}/cancel`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('Erreur lors de l’annulation du ticket');
+    }
+
+    const data = await response.json();
+    alert(`Le ticket #${ticket.id} a été annulé avec succès !`);
+
+    console.log('Cancel response:', data);
+
+  } catch (error) {
+    console.error(error);
+    alert("Impossible d'annuler ce ticket.");
+  }
+};
+
 
   const handleModifyTicket = (ticket) => {
     console.log('Modifying ticket:', ticket);

@@ -1,52 +1,88 @@
-import React, { useState } from 'react';
-import { Ticket, Bus, MapPin, Clock, ArrowRight, AlertCircle, CheckCircle, Save, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Ticket, Bus, MapPin, AlertCircle, CheckCircle, Save, X } from 'lucide-react';
 
 // ============= MAIN MODIFY TICKET PAGE =============
 export default function ModifyTicket() {
-  // ============= DATA FROM PROFILE PAGE =============
-  // In real app with React Router, receive data like this:
-  // const { state } = useLocation();
-  // const navigate = useNavigate();
-  // const ticket = state?.ticket;
-  
-  // Mock ticket data (will come from Profile page via React Router state)
+  // ============= MOCK TICKET DATA =============
+  // In real app, this comes from React Router: const { state } = useLocation();
   const ticket = {
     id: 101,
     userId: 1,
+    tripId: 5, // Used to fetch seats for this trip
     busNumber: "B12",
     from: "Rabat Ville",
     to: "Agdal",
     seat: 14,
-    currentDeparture: "08:30",
-    currentArrival: "09:15",
+    seatcode: "S14",
     price: "25 MAD",
     status: "PAID"
   };
 
-  // ============= AVAILABLE TIMES (Mock - fetch from backend) =============
-  const availableTimes = [
-    { departure: "07:00", arrival: "07:45" },
-    { departure: "08:30", arrival: "09:15" },
-    { departure: "10:00", arrival: "10:45" },
-    { departure: "12:00", arrival: "12:45" },
-    { departure: "14:30", arrival: "15:15" },
-    { departure: "17:00", arrival: "17:45" }
-  ];
-
-  // ============= AVAILABLE SEATS (Mock - fetch from backend) =============
-  const availableSeats = [5, 8, 12, 15, 18, 21, 24, 27, 30, 33];
-
   // ============= COMPONENT STATE =============
-  const [selectedDeparture, setSelectedDeparture] = useState(ticket.currentDeparture);
   const [selectedSeat, setSelectedSeat] = useState(ticket.seat);
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetchingSeats, setIsFetchingSeats] = useState(true);
   const [error, setError] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
+  const [seatMap, setSeatMap] = useState([]);
+
+  // ============= HELPER FUNCTION =============
+  const seatCodeToNumber = (seatCode) => {
+    if (!seatCode) return null;
+    const match = seatCode.match(/\d+/);
+    return match ? parseInt(match[0]) : null;
+  };
+
+  // ============= FETCH RESERVED SEATS =============
+  useEffect(() => {
+    loadSeats();
+  }, []);
+
+  async function loadSeats() {
+    setIsFetchingSeats(true);
+    setError('');
+    
+    try {
+      const response = await fetch(`http://localhost:8081/api/tickets/trip/${ticket.tripId}`);
+
+      let ticketList = [];
+      if (response.ok) {
+        ticketList = await response.json();
+      } else {
+        throw new Error('Failed to load seats');
+      }
+
+      // Build the full seat map (40 seats)
+      const seats = [];
+      for (let i = 1; i <= 40; i++) {
+        seats.push({
+          number: i,
+          reserved: false
+        });
+      }
+
+      // Mark booked seats from backend (except current user's seat)
+      ticketList.forEach(t => {
+        if (["RESERVED", "PAID", "VALIDATED"].includes(t.status) && t.id !== ticket.id) {
+          const seatNumber = seatCodeToNumber(t.seatcode);
+          const index = seats.findIndex(s => s.number === seatNumber);
+          if (index !== -1) {
+            seats[index].reserved = true;
+          }
+        }
+      });
+
+      setSeatMap(seats);
+    } catch (err) {
+      console.error('Failed to load seats:', err);
+      setError('Failed to load available seats. Please refresh the page.');
+    } finally {
+      setIsFetchingSeats(false);
+    }
+  }
 
   // Check if changes were made
-  const hasChanges = 
-    selectedDeparture !== ticket.currentDeparture || 
-    selectedSeat !== ticket.seat;
+  const hasChanges = selectedSeat !== ticket.seat;
 
   // Check if can modify
   const canModify = ticket.status === 'PAID' || ticket.status === 'RESERVED';
@@ -56,7 +92,7 @@ export default function ModifyTicket() {
     setError('');
 
     if (!hasChanges) {
-      setError('Please make at least one change before saving');
+      setError('Please select a different seat before saving');
       return;
     }
 
@@ -64,39 +100,28 @@ export default function ModifyTicket() {
 
     try {
       // ============= BACKEND API CALL =============
-      // Replace this simulation with your real API call:
-      
-      /*
-      const response = await axios.put(`/api/tickets/${ticket.id}/modify`, {
-        userId: ticket.userId,
-        newDeparture: selectedDeparture,
-        newSeat: selectedSeat
+      const response = await fetch(`http://localhost:8081/api/tickets/${ticket.id}/change`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          newSeatCode: `S${selectedSeat}`
+        })
       });
-      
-      if (response.status === 200) {
-        setShowSuccess(true);
-        setTimeout(() => navigate('/profile'), 2000);
-      }
-      */
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // Simulate random error for demo (remove in production)
-      if (Math.random() < 0.2) {
-        throw new Error('Seat already occupied');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to modify ticket');
       }
 
-      console.log('✅ Ticket modified:', {
-        ticketId: ticket.id,
-        userId: ticket.userId,
-        newDeparture: selectedDeparture,
-        newSeat: selectedSeat
-      });
+      const updatedTicket = await response.json();
+
+      console.log('✅ Ticket modified:', updatedTicket);
 
       setShowSuccess(true);
       
-      // Auto redirect after 2 seconds
+      // Auto redirect after 2 seconds (uncomment in production)
       // setTimeout(() => navigate('/profile'), 2000);
 
     } catch (err) {
@@ -139,10 +164,10 @@ export default function ModifyTicket() {
           {/* Header */}
           <div className="text-center mb-8">
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              Modify Your Ticket ✏️
+              Modify Your Seat 💺
             </h1>
             <p className="text-blue-100 text-lg">
-              Change your departure time or seat number
+              Change your seat number for this trip
             </p>
           </div>
 
@@ -191,21 +216,24 @@ export default function ModifyTicket() {
                   </div>
 
                   <div className="bg-white/5 rounded-xl p-4">
-                    <div className="flex items-center space-x-2 text-blue-200 text-xs mb-1">
-                      <Clock className="w-3 h-3" />
-                      <span>Current Time</span>
-                    </div>
-                    <div className="text-white font-bold">{ticket.currentDeparture}</div>
-                  </div>
-
-                  <div className="bg-white/5 rounded-xl p-4">
                     <div className="text-blue-200 text-xs mb-1">Current Seat</div>
-                    <div className="text-white font-bold text-xl">{ticket.seat}</div>
+                    <div className="text-white font-bold text-3xl">{ticket.seat}</div>
                   </div>
 
                   <div className="bg-white/5 rounded-xl p-4">
                     <div className="text-blue-200 text-xs mb-1">Price</div>
                     <div className="text-white font-bold">{ticket.price}</div>
+                  </div>
+
+                  <div className="bg-white/5 rounded-xl p-4">
+                    <div className="text-blue-200 text-xs mb-1">Status</div>
+                    <div className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
+                      ticket.status === 'PAID' ? 'bg-green-500/20 text-green-300' :
+                      ticket.status === 'RESERVED' ? 'bg-yellow-500/20 text-yellow-300' :
+                      'bg-gray-500/20 text-gray-300'
+                    }`}>
+                      {ticket.status}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -215,67 +243,96 @@ export default function ModifyTicket() {
                 <div className="h-full w-px bg-white/20"></div>
               </div>
 
-              {/* ============= RIGHT: MODIFICATION OPTIONS ============= */}
+              {/* ============= RIGHT: SEAT SELECTION ============= */}
               <div className="lg:col-span-1 space-y-6">
-                <h3 className="text-xl font-bold text-white mb-6">Select New Options</h3>
+                <h3 className="text-xl font-bold text-white mb-6">Select New Seat</h3>
 
                 {canModify ? (
                   <>
-                    {/* Departure Time Selection */}
-                    <div>
-                      <label className="block text-white text-sm font-semibold mb-3">
-                        New Departure Time
-                      </label>
-                      <div className="space-y-2 max-h-64 overflow-y-auto custom-scrollbar">
-                        {availableTimes.map((time, index) => (
-                          <button
-                            key={index}
-                            onClick={() => setSelectedDeparture(time.departure)}
-                            disabled={isLoading}
-                            className={`w-full p-4 rounded-xl transition-all duration-300 ${
-                              selectedDeparture === time.departure
-                                ? 'bg-blue-500 border-2 border-blue-400 ring-2 ring-blue-400/50'
-                                : 'bg-white/10 border-2 border-white/20 hover:bg-white/20 hover:border-white/30'
-                            }`}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-3">
-                                <Clock className="w-5 h-5 text-white" />
-                                <div className="text-left">
-                                  <div className="text-white font-bold">{time.departure}</div>
-                                  <div className="text-blue-200 text-xs">Arrives {time.arrival}</div>
-                                </div>
-                              </div>
-                              {selectedDeparture === time.departure && (
-                                <CheckCircle className="w-5 h-5 text-white" />
-                              )}
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
                     {/* Seat Selection */}
                     <div>
                       <label className="block text-white text-sm font-semibold mb-3">
-                        New Seat Number
+                        Available Seats
                       </label>
-                      <div className="grid grid-cols-5 gap-2">
-                        {availableSeats.map((seat) => (
-                          <button
-                            key={seat}
-                            onClick={() => setSelectedSeat(seat)}
-                            disabled={isLoading}
-                            className={`aspect-square rounded-xl font-bold transition-all duration-300 ${
-                              selectedSeat === seat
-                                ? 'bg-blue-500 border-2 border-blue-400 text-white scale-110'
-                                : 'bg-white/10 border-2 border-white/20 text-white hover:bg-white/20 hover:scale-105'
-                            }`}
-                          >
-                            {seat}
-                          </button>
-                        ))}
-                      </div>
+                      
+                      {isFetchingSeats ? (
+                        <div className="flex flex-col items-center justify-center py-12">
+                          <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin mb-4"></div>
+                          <p className="text-blue-200">Loading available seats...</p>
+                        </div>
+                      ) : (
+                        <div className="bg-white/5 rounded-2xl p-4 max-h-[500px] overflow-y-auto custom-scrollbar">
+                          {/* Bus Layout */}
+                          <div className="space-y-2">
+                            {/* Driver Section */}
+                            <div className="flex justify-end mb-4 pb-4 border-b border-white/10">
+                              <div className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center">
+                                <span className="text-white text-xs">🚗</span>
+                              </div>
+                            </div>
+                            
+                            {/* Seats Grid - 10 rows x 4 seats */}
+                            {Array.from({ length: 10 }).map((_, rowIndex) => (
+                              <div key={rowIndex} className="grid grid-cols-4 gap-2">
+                                {Array.from({ length: 4 }).map((_, colIndex) => {
+                                  const seatNumber = rowIndex * 4 + colIndex + 1;
+                                  const seat = seatMap.find(s => s.number === seatNumber);
+                                  const isCurrentSeat = seatNumber === ticket.seat;
+                                  const isReserved = seat?.reserved && !isCurrentSeat;
+                                  const isSelected = selectedSeat === seatNumber;
+                                  
+                                  return (
+                                    <button
+                                      key={seatNumber}
+                                      onClick={() => !isReserved && setSelectedSeat(seatNumber)}
+                                      disabled={isLoading || isReserved}
+                                      className={`aspect-square rounded-lg font-bold text-sm transition-all duration-300 relative ${
+                                        isReserved
+                                          ? 'bg-red-500/20 border-2 border-red-400/30 text-red-300 cursor-not-allowed'
+                                          : isSelected
+                                          ? 'bg-blue-500 border-2 border-blue-400 text-white scale-110 shadow-lg'
+                                          : isCurrentSeat
+                                          ? 'bg-yellow-500/30 border-2 border-yellow-400/50 text-yellow-200'
+                                          : 'bg-white/10 border-2 border-white/20 text-white hover:bg-white/20 hover:scale-105'
+                                      }`}
+                                    >
+                                      {seatNumber}
+                                      {isCurrentSeat && (
+                                        <span className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full"></span>
+                                      )}
+                                      {isReserved && (
+                                        <X className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4 h-4" />
+                                      )}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Legend */}
+                          <div className="mt-6 pt-4 border-t border-white/10">
+                            <div className="grid grid-cols-3 gap-2 text-xs">
+                              <div className="flex items-center space-x-2">
+                                <div className="w-6 h-6 bg-white/10 border-2 border-white/20 rounded"></div>
+                                <span className="text-blue-200">Available</span>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <div className="w-6 h-6 bg-red-500/20 border-2 border-red-400/30 rounded relative">
+                                  <X className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3 h-3 text-red-300" />
+                                </div>
+                                <span className="text-blue-200">Reserved</span>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <div className="w-6 h-6 bg-yellow-500/30 border-2 border-yellow-400/50 rounded relative">
+                                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-400 rounded-full"></span>
+                                </div>
+                                <span className="text-blue-200">Your Seat</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {/* Error Message */}
@@ -292,7 +349,7 @@ export default function ModifyTicket() {
                     <div className="flex gap-4 pt-4">
                       <button
                         onClick={handleSave}
-                        disabled={isLoading || !hasChanges}
+                        disabled={isLoading || !hasChanges || isFetchingSeats}
                         className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold py-4 rounded-xl hover:from-blue-600 hover:to-indigo-700 focus:outline-none focus:ring-4 focus:ring-blue-400/50 transform hover:scale-105 active:scale-95 transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center"
                       >
                         {isLoading ? (
@@ -311,9 +368,10 @@ export default function ModifyTicket() {
                       <button
                         onClick={handleCancel}
                         disabled={isLoading}
-                        className="flex-1 bg-white/10 hover:bg-white/20 text-white font-semibold py-4 rounded-xl border-2 border-white/20 hover:border-white/30 transition-all duration-300 disabled:opacity-50"
+                        className="flex-1 bg-white/10 hover:bg-white/20 text-white font-semibold py-4 rounded-xl border-2 border-white/20 hover:border-white/30 transition-all duration-300 disabled:opacity-50 flex items-center justify-center"
                       >
-                        Cancel
+                        <X className="w-4 h-4 mr-2" />
+                        <span>Cancel</span>
                       </button>
                     </div>
                   </>
@@ -323,7 +381,6 @@ export default function ModifyTicket() {
                     className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold py-4 rounded-xl hover:from-blue-600 hover:to-indigo-700 transition-all duration-300 flex items-center justify-center"
                   >
                     <span>Return to Profile</span>
-                    <ArrowRight className="ml-2 w-5 h-5" />
                   </button>
                 )}
               </div>
@@ -338,10 +395,11 @@ export default function ModifyTicket() {
                 <div>
                   <h4 className="text-white font-semibold mb-2">Important</h4>
                   <ul className="text-blue-100 text-sm space-y-1">
-                    <li>• Select a new departure time OR a new seat number</li>
-                    <li>• Price remains the same for modifications</li>
+                    <li>• Select a new seat from the available options</li>
+                    <li>• Red seats with X are already reserved by other passengers</li>
+                    <li>• Your current seat is marked with a yellow dot</li>
+                    <li>• Price remains the same for seat modifications</li>
                     <li>• Changes are applied immediately after confirmation</li>
-                    <li>• Only available seats and times are shown</li>
                   </ul>
                 </div>
               </div>
@@ -361,26 +419,19 @@ export default function ModifyTicket() {
               
               <h3 className="text-2xl font-bold text-white mb-2">Success!</h3>
               <p className="text-blue-100 mb-6">
-                Your ticket has been modified successfully.
+                Your seat has been changed successfully.
               </p>
 
-              <div className="space-y-3">
-                <div className="bg-white/5 rounded-xl p-3 text-left">
-                  <div className="text-blue-200 text-xs mb-1">New Departure</div>
-                  <div className="text-white font-bold">{selectedDeparture}</div>
-                </div>
-                <div className="bg-white/5 rounded-xl p-3 text-left">
-                  <div className="text-blue-200 text-xs mb-1">New Seat</div>
-                  <div className="text-white font-bold">{selectedSeat}</div>
-                </div>
+              <div className="bg-white/5 rounded-xl p-4 text-left mb-6">
+                <div className="text-blue-200 text-xs mb-1">New Seat</div>
+                <div className="text-white font-bold text-3xl">{selectedSeat}</div>
               </div>
 
               <button
                 onClick={handleCancel}
-                className="w-full mt-6 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold py-3 rounded-xl hover:from-blue-600 hover:to-indigo-700 transition-all duration-300 flex items-center justify-center group"
+                className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold py-3 rounded-xl hover:from-blue-600 hover:to-indigo-700 transition-all duration-300 flex items-center justify-center"
               >
                 <span>Return to Profile</span>
-                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </button>
             </div>
           </div>
