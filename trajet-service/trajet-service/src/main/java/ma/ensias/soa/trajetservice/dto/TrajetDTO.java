@@ -1,8 +1,13 @@
 package ma.ensias.soa.trajetservice.dto;
 
 
-import lombok.*;
 import java.util.List;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
 @Setter
@@ -17,4 +22,6 @@ public class TrajetDTO {
     private List<String> arrets;
     private double distanceKm;
     private boolean active;
+    private List<HoraireDTO> horaires;
 }
+ 

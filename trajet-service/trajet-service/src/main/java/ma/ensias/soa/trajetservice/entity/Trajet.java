@@ -25,7 +25,7 @@ public class Trajet {
 
     @Column(nullable = false)
     private String arrivee; // ending point
-
+ 
     @ElementCollection
     @CollectionTable(
         name = "trajet_arrets",
@@ -37,5 +37,9 @@ public class Trajet {
     @Column(nullable = true)
     private double distanceKm;
     @Column(nullable = true)
-    private boolean active = true; // route availability
+    private boolean active = true; 
+    // route availability
+
+    @OneToMany(mappedBy = "trajet", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Horaire> horaires;
 }

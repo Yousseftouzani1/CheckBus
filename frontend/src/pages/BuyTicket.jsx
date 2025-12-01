@@ -205,6 +205,7 @@ function BusCard({ bus, onBuyTicket ,onReserveSeat  }) {
           <div>
             <h3 className="text-xl font-bold text-white">Bus {bus.number}</h3>
             <p className="text-blue-100 text-sm">{bus.from} → {bus.to}</p>
+            {bus.jour && <span className="ml-2 text-xs text-blue-300">({bus.jour})</span>}
           </div>
         </div>
 
@@ -334,18 +335,22 @@ const handleSearch = async (startStation, endStation) => {
 
     const trajets = await response.json();
 
-    const mapped = trajets.map(t => ({
-      id: t.id,
-      tripId: t.id, 
-      number: t.ligneCode,
-      from: t.depart,
-      to: t.arrivee,   
-      departure: t.depart,
-      arrival: t.arrivee,
-      delay: 0,
-      status: t.active ? "On Time" : "Inactive",
-      price: (t.distanceKm * 0.6).toFixed(2) + " MAD"
-    }));
+    const mapped = trajets.flatMap(t => 
+  (t.horaires || []).map(h => ({
+    id: `${t.id}-${h.id}`,
+    tripId: t.id,
+    number: t.ligneCode,
+    from: t.depart,
+    to: t.arrivee,
+    departure: h.heureDepart,
+    arrival: h.heureArrivee,
+    jour: h.jour,
+    delay: 0,
+    status: t.active ? "On Time" : "Inactive",
+    price: (t.distanceKm * 0.6).toFixed(2) + " MAD"
+  }))
+);
+
 
     setSearchResults(mapped);
   } catch (err) {
