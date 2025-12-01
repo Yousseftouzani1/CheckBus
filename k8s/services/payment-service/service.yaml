@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-service
+spec:
+  selector:
+    app: payment-service
+  ports:
+    - port: 8085        # The port other services use INSIDE Kubernetes
+      targetPort: 8085  # The port exposed by the container
+  type: ClusterIP       # Internal-only access (correct for microservices)

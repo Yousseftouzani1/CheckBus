@@ -33,3 +33,5 @@ logs/
 
 #environment files
 .env
+
+k8s/secrets/
