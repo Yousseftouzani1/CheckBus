@@ -1,5 +1,6 @@
 package ma.ensias.soa.authservice.entity;
 
+import ma.ensias.soa.authservice.Enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -31,6 +32,10 @@ public class UserAuth {
 
     @Column(nullable = false, unique = true)
     private String email;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role = Role.USER;
 
     @Column(name = "isActive")
     private Boolean isActive = true;

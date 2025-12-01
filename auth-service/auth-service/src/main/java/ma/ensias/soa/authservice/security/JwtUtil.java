@@ -48,6 +48,10 @@ public class JwtUtil {
         return getClaimFromToken(token, claims -> claims.get("state", Integer.class));
     }
 
+    public String extractEmailRole(String token) {
+        return getClaimFromToken(token, claims -> claims.get("role", String.class));
+    }
+
 
 
     public Date getExpirationDateFromToken(String token) {
@@ -84,6 +88,7 @@ public class JwtUtil {
         claims.put("name", user.getUsername());
         claims.put("email", user.getEmail());
         claims.put("rememberMe", rememberMe); // Added this line
+        claims.put("role", user.getRole().name());
 
         long validity = rememberMe ? JWT_REMEMBER_ME_VALIDITY : JWT_TOKEN_VALIDITY;
         return createToken(claims, user.getEmail(), validity);

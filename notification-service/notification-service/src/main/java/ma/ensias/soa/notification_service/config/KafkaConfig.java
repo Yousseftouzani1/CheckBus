@@ -28,21 +28,34 @@ public class KafkaConfig {
     private static final String BOOTSTRAP = "kafka:29092";
     private static final String GROUP = "notification-service-group";
 
+    /* ============================================================
+          UTILITY: Create a safe, cleaned JsonDeserializer
+       ============================================================ */
+    private <T> JsonDeserializer<T> createDeserializer(Class<T> clazz) {
+        JsonDeserializer<T> deserializer = new JsonDeserializer<>(clazz);
+
+        // 🔥 IMPORTANT FIXES TO PREVENT BaseEvent/metadata ERRORS
+        deserializer.addTrustedPackages("*");
+        deserializer.setUseTypeHeaders(false);
+        deserializer.setRemoveTypeHeaders(true);
+        deserializer.setUseTypeMapperForKey(false);
+
+        return deserializer;
+    }
+
     /* =====================================================================
-        CONSUMER 1: SubscriptionEvent  (From subscription-service)
+        CONSUMER 1: SubscriptionEvent (From subscription-service)
        ===================================================================== */
     @Bean
     public ConsumerFactory<String, SubscriptionEvent> subscriptionConsumerFactory() {
 
         JsonDeserializer<SubscriptionEvent> deserializer =
-                new JsonDeserializer<>(SubscriptionEvent.class);
-        deserializer.addTrustedPackages("ma.ensias.soa.notification_service.dto.subscription");
+                createDeserializer(SubscriptionEvent.class);
 
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP);
         props.put(ConsumerConfig.GROUP_ID_CONFIG, GROUP);
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, deserializer);
 
         return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(), deserializer);
     }
@@ -59,20 +72,18 @@ public class KafkaConfig {
     }
 
     /* =====================================================================
-        CONSUMER 2: PaymentEvent  (From payment-service)
+        CONSUMER 2: PaymentEvent (From payment-service)
        ===================================================================== */
     @Bean
     public ConsumerFactory<String, PaymentEvent> paymentConsumerFactory() {
 
         JsonDeserializer<PaymentEvent> deserializer =
-                new JsonDeserializer<>(PaymentEvent.class);
-        deserializer.addTrustedPackages("ma.ensias.soa.notification_service.dto.payment");
+                createDeserializer(PaymentEvent.class);
 
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP);
         props.put(ConsumerConfig.GROUP_ID_CONFIG, GROUP);
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, deserializer);
 
         return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(), deserializer);
     }
@@ -89,20 +100,18 @@ public class KafkaConfig {
     }
 
     /* =====================================================================
-        CONSUMER 3: RefundRequestEvent  (From ticket-service)
+        CONSUMER 3: RefundRequestEvent (From ticket-service)
        ===================================================================== */
     @Bean
     public ConsumerFactory<String, RefundRequestEvent> refundConsumerFactory() {
 
         JsonDeserializer<RefundRequestEvent> deserializer =
-                new JsonDeserializer<>(RefundRequestEvent.class);
-        deserializer.addTrustedPackages("ma.ensias.soa.notification_service.dto.ticket");
+                createDeserializer(RefundRequestEvent.class);
 
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP);
         props.put(ConsumerConfig.GROUP_ID_CONFIG, GROUP);
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, deserializer);
 
         return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(), deserializer);
     }
@@ -119,7 +128,7 @@ public class KafkaConfig {
     }
 
     /* =====================================================================
-        TOPICS - (Notification Service ONLY listens, does not produce)
+        TOPICS (only declare, NotificationService does NOT produce)
        ===================================================================== */
     @Bean
     public NewTopic subscriptionEventTopic() {
