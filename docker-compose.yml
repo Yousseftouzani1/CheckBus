@@ -204,6 +204,53 @@ services:
     volumes:
       - subscription_data:/var/lib/postgresql/data
     restart: always
+
+  # ====== NOTIFICATION DATABASE ======
+  notification-db:
+    image: postgres:15
+    container_name: notification-db
+    environment:
+      POSTGRES_DB: notification_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - notification_data:/var/lib/postgresql/data
+    restart: always
+
+  # ====== NOTIFICATION SERVICE ======
+  notification-service:
+    build:
+      context: ./notification-service/notification-service
+      dockerfile: Dockerfile
+    container_name: notification-service
+    depends_on:
+      - kafka
+      - notification-db
+    ports:
+      - "8090:8090"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+
+      SPRING_DATASOURCE_URL: jdbc:postgresql://notification-db:5432/notification_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+
+      MAIL_ADDR: ${MAIL_ADDR}
+      APP_PSSWRD: ${APP_PSSWRD}
+
+      SPRING_MAIL_HOST: smtp.gmail.com
+      SPRING_MAIL_PORT: 587
+      SPRING_MAIL_USERNAME: ${MAIL_ADDR}
+      SPRING_MAIL_PASSWORD: ${APP_PSSWRD}
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: "true"
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: "true"
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_REQUIRED: "true"
+
+    restart: always
+
 # =========== User database =============
   user-db:
     image: postgres:15
