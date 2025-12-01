@@ -1,0 +1,137 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-gateway-config
+data:
+  nginx.conf: |
+    ###############################
+    # GLOBAL CONFIG
+    ###############################
+
+    worker_processes auto;
+
+    events {
+        worker_connections 1024;
+    }
+
+    ###############################
+    # HTTP CONFIG
+    ###############################
+
+    http {
+
+        # Enable useful logs
+        access_log /var/log/nginx/access.log;
+        error_log  /var/log/nginx/error.log;
+
+        # Basic MIME Types
+        include /etc/nginx/mime.types;
+        default_type application/octet-stream;
+
+        # Timeouts for upstream services
+        proxy_read_timeout 300s;
+        proxy_connect_timeout 300s;
+        proxy_send_timeout 300s;
+
+        # Forwarded headers
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+
+        #############################################
+        # UPSTREAM — LOAD BALANCERS FOR EACH SERVICE
+        #############################################
+
+        upstream user_service {
+            server user-service:8082;
+        }
+
+        upstream payment_service {
+            server payment-service:8085;
+        }
+
+        upstream ticket_service {
+            server ticket-service:8081;
+        }
+
+        upstream trajet_service {
+            server trajet-service:8083;
+        }
+
+        upstream subscription_service {
+            server subscription-service:8087;
+        }
+
+        upstream auth_service {
+            server auth-service:8084;
+        }
+
+        upstream geoloc_service {
+            server geoloc-service:8089;
+        }
+
+
+        #############################################
+        # API GATEWAY ROUTES
+        #############################################
+
+        server {
+            listen 80;
+            server_name _;
+
+            # --------------------------
+            # USER SERVICE ROUTES
+            # --------------------------
+            location /api/users/ {
+                proxy_pass http://user_service;
+            }
+
+            # --------------------------
+            # PAYMENT SERVICE ROUTES
+            # --------------------------
+            location /api/payments/ {
+                proxy_pass http://payment_service;
+            }
+
+            # --------------------------
+            # TICKET SERVICE ROUTES
+            # --------------------------
+            location /api/tickets/ {
+                proxy_pass http://ticket_service;
+            }
+
+            # --------------------------
+            # TRAJET SERVICE ROUTES
+            # --------------------------
+            location /api/trajets/ {
+                proxy_pass http://trajet_service;
+            }
+
+            # --------------------------
+            # SUBSCRIPTION SERVICE ROUTES
+            # --------------------------
+            location /api/subscriptions/ {
+                proxy_pass http://subscription_service;
+            }
+
+            # --------------------------
+            # AUTH SERVICE ROUTES
+            # --------------------------
+            location /api/auth/ {
+                proxy_pass http://auth_service;
+            }
+
+            # ⭐ GEOLOC SERVICE ROUTES
+            location /api/geoloc/ {
+                proxy_pass http://geoloc_service;
+            }
+
+            # DEFAULT CATCH-ALL
+            location / {
+                return 404 "Unknown API endpoint";
+            }
+        }
+
+    }

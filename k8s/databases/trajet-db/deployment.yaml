@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trajet-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: trajet-db
+  template:
+    metadata:
+      labels:
+        app: trajet-db
+    spec:
+      containers:
+        - name: trajet-db
+          image: postgres:15
+          env:
+            - name: POSTGRES_DB
+              value: trajet_db
+            - name: POSTGRES_USER
+              value: postgres
+            - name: POSTGRES_PASSWORD
+              value: postgres
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: trajet-db-storage
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: trajet-db-storage
+          persistentVolumeClaim:
+            claimName: trajet-db-pvc
