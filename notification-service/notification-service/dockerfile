@@ -1,0 +1,31 @@
+# ================================
+# 1. BUILD STAGE
+# ================================
+FROM maven:3.9.6-eclipse-temurin-17 AS build
+WORKDIR /app
+
+# Copy pom.xml and download dependencies first (layer caching)
+COPY pom.xml .
+RUN mvn -q dependency:go-offline
+
+# Copy project files
+COPY src ./src
+
+# Build the application
+RUN mvn -q -DskipTests clean package
+
+
+# ================================
+# 2. RUNTIME STAGE
+# ================================
+FROM eclipse-temurin:17-jdk
+WORKDIR /app
+
+# Copy built JAR from builder stage
+COPY --from=build /app/target/*.jar app.jar
+
+# Expose port (matches your docker-compose config: 8090)
+EXPOSE 8090
+
+# Run application
+ENTRYPOINT ["java", "-jar", "app.jar"]

@@ -1,0 +1,13 @@
+<div>
+    <p>Hello <strong th:text="${username}">User</strong>,</p>
+
+    <p>Your payment was successful.</p>
+
+    <ul>
+        <li><strong>Amount:</strong> <span th:text="${amount}"></span> MAD</li>
+        <li><strong>Reference:</strong> <span th:text="${paymentReference}"></span></li>
+        <li><strong>Date:</strong> <span th:text="${confirmedAt}"></span></li>
+    </ul>
+
+    <p>Thank you for your purchase!</p>
+</div>

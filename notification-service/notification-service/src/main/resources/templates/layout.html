@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <style>
+        .container {
+            font-family: Arial, sans-serif;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 6px;
+            color: #333;
+            max-width: 600px;
+            margin: auto;
+            border: 1px solid #ddd;
+        }
+        .header {
+            background-color: #0077cc;
+            color: white;
+            padding: 12px;
+            text-align: center;
+            border-radius: 4px;
+            font-size: 20px;
+        }
+        .content {
+            margin-top: 20px;
+            font-size: 15px;
+        }
+        .footer {
+            margin-top: 30px;
+            color: #888;
+            font-size: 12px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+    <div class="header">
+        <span th:text="${title}">Notification</span>
+    </div>
+
+    <div class="content" th:insert="${contentTemplate}"></div>
+
+    <div class="footer">
+        This is an automated email from ENSIAS Transport System.
+    </div>
+</div>
+</body>
+</html>
