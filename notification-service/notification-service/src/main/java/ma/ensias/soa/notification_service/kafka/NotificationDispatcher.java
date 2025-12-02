@@ -16,17 +16,17 @@ public class NotificationDispatcher {
     private final NotificationService notificationService;
 
     public void handleSubscriptionEvent(SubscriptionEvent event) {
-        log.info("📩 Handling SubscriptionEvent: {}", event);
+        log.info("Handling SubscriptionEvent: {}", event);
         notificationService.processSubscriptionEvent(event);
     }
 
     public void handlePaymentEvent(PaymentEvent event) {
-        log.info("💰 Handling PaymentEvent: {}", event);
+        log.info("Handling PaymentEvent: {}", event);
         notificationService.processPaymentEvent(event);
     }
 
     public void handleRefundEvent(RefundRequestEvent event) {
-        log.info("🔄 Handling RefundRequestEvent: {}", event);
+        log.info("Handling RefundRequestEvent: {}", event);
         notificationService.processRefundEvent(event);
     }
 }

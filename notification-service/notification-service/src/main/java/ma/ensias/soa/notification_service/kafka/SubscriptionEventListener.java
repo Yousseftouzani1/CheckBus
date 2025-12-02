@@ -13,7 +13,7 @@ public class SubscriptionEventListener {
 
     private final NotificationDispatcher dispatcher;
 
-    @KafkaListener(topics = "subscription-event-topic", groupId = "notification-service-group")
+    @KafkaListener(topics = "subscription-event-topic", groupId = "notification-service-group", containerFactory = "subscriptionKafkaListenerContainerFactory")
     public void onSubscriptionEvent(SubscriptionEvent event) {
         log.info("📥 Received SubscriptionEvent from Kafka: {}", event);
         dispatcher.handleSubscriptionEvent(event);

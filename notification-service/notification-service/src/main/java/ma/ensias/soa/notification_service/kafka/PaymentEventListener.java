@@ -13,13 +13,13 @@ public class PaymentEventListener {
 
     private final NotificationDispatcher dispatcher;
 
-    @KafkaListener(topics = "payment-status-topic", groupId = "notification-service-group")
+    @KafkaListener(topics = "payment-status-topic", groupId = "notification-service-group", containerFactory = "paymentKafkaListenerContainerFactory")
     public void onTicketPaymentEvent(PaymentEvent event) {
         log.info("📥 Received Ticket PaymentEvent: {}", event);
         dispatcher.handlePaymentEvent(event);
     }
 
-    @KafkaListener(topics = "subscription-payment-topic", groupId = "notification-service-group")
+    @KafkaListener(topics = "subscription-payment-topic", groupId = "notification-service-group", containerFactory = "paymentKafkaListenerContainerFactory")
     public void onSubscriptionPaymentEvent(PaymentEvent event) {
         log.info("📥 Received Subscription PaymentEvent: {}", event);
         dispatcher.handlePaymentEvent(event);
