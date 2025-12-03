@@ -1,9 +1,58 @@
-import React from 'react';
-import { Ticket, Calendar, MapPin, CreditCard, User, Bus, LogOut ,BadgeCheck } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Ticket, Calendar, MapPin, CreditCard, User, Bus, LogOut, BadgeCheck, Bell } from 'lucide-react';
 import { useNavigate } from "react-router-dom";
 
+// ============= JWT HELPER FUNCTIONS =============
+const getCookie = (name) => {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return null;
+};
+
+const parseJwt = (token) => {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    return JSON.parse(jsonPayload);
+  } catch (error) {
+    console.error('Error parsing JWT:', error);
+    return null;
+  }
+};
+
+const getUserIdFromToken = () => {
+  const token = getCookie('jwt') || getCookie('token') || getCookie('authToken');
+  if (!token) return null;
+  const payload = parseJwt(token);
+  if (!payload) return null;
+  return payload.userId || payload.id || payload.sub || 35;
+};
+
+// ============= API FUNCTION =============
+const fetchUnreadCount = async (userId) => {
+  try {
+    const response = await fetch(`http://localhost:8090/notification-service/api/notifications/user/${userId}/unread-count`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include'
+    });
+    if (!response.ok) throw new Error('Failed to fetch unread count');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching unread count:', error);
+    return 0;
+  }
+};
+
 // MenuCard Component
-function MenuCard({ icon: Icon, title, description, gradient, onClick }) {
+function MenuCard({ icon: Icon, title, description, gradient, onClick, badge }) {
   return (
     <button
       onClick={onClick}
@@ -14,6 +63,13 @@ function MenuCard({ icon: Icon, title, description, gradient, onClick }) {
       <div className="relative mb-6 inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-2xl shadow-lg group-hover:shadow-blue-400/50 group-hover:scale-110 transition-transform duration-300">
         <Icon className="w-10 h-10 text-white" strokeWidth={2.5} />
         <div className="absolute inset-0 bg-blue-400 rounded-2xl blur-xl opacity-0 group-hover:opacity-50 transition-opacity duration-300"></div>
+        
+        {/* Notification Badge */}
+        {badge > 0 && (
+          <div className="absolute -top-2 -right-2 min-w-[24px] h-6 px-2 bg-gradient-to-r from-red-500 to-pink-500 rounded-full flex items-center justify-center shadow-lg animate-pulse">
+            <span className="text-white text-xs font-bold">{badge > 99 ? '99+' : badge}</span>
+          </div>
+        )}
       </div>
 
       <div className="relative">
@@ -38,9 +94,30 @@ function MenuCard({ icon: Icon, title, description, gradient, onClick }) {
 
 // Main Menu Component
 export default function Menu() {
-
-  // ✅ Real navigation hook
   const navigate = useNavigate();
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [userId, setUserId] = useState(null);
+
+  // Get user ID and fetch unread count
+  useEffect(() => {
+    const id = getUserIdFromToken();
+    if (id) {
+      setUserId(id);
+      
+      // Initial fetch
+      const loadUnreadCount = async () => {
+        const count = await fetchUnreadCount(id);
+        setUnreadCount(count);
+      };
+      
+      loadUnreadCount();
+      
+      // Refresh every 30 seconds
+      const interval = setInterval(loadUnreadCount, 30000);
+      
+      return () => clearInterval(interval);
+    }
+  }, []);
 
   const menuItems = [
     {
@@ -50,14 +127,13 @@ export default function Menu() {
       gradient: 'bg-gradient-to-br from-blue-500 to-cyan-500',
       path: '/buy-ticket'
     },
-{
-  icon: CreditCard,
-  title: 'Payments',
-  description: 'View and manage your payments',
-  gradient: 'bg-gradient-to-br from-yellow-500 to-orange-600',
-  path: '/payments'
-},
-
+    {
+      icon: CreditCard,
+      title: 'Payments',
+      description: 'View and manage your payments',
+      gradient: 'bg-gradient-to-br from-yellow-500 to-orange-600',
+      path: '/payments'
+    },
     {
       icon: MapPin,
       title: 'Live Bus Map',
@@ -66,11 +142,19 @@ export default function Menu() {
       path: '/map'
     },
     {
-      icon: BadgeCheck ,
+      icon: BadgeCheck,
       title: 'Subscriptions',
       description: 'Manage your travel passes',
       gradient: 'bg-gradient-to-br from-orange-500 to-red-500',
       path: '/subscriptions'
+    },
+    {
+      icon: Bell,
+      title: 'Notifications',
+      description: 'View your alerts and updates',
+      gradient: 'bg-gradient-to-br from-purple-500 to-indigo-500',
+      path: '/notifications',
+      badge: unreadCount // ✅ Pass unread count
     },
     {
       icon: User,
@@ -122,7 +206,12 @@ export default function Menu() {
             </div>
 
             <button
-              onClick={() => navigate('/')}
+              onClick={() => {
+                // delete cookie
+                document.cookie = "token=; Max-Age=0; path=/;";
+                window.location.reload();
+                navigate('/');
+              }}
               className="flex items-center space-x-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 text-white hover:bg-white/20 transition-all duration-300 group"
             >
               <LogOut className="w-5 h-5 group-hover:rotate-12 transition-transform" />
@@ -154,6 +243,7 @@ export default function Menu() {
                   description={item.description}
                   gradient={item.gradient}
                   onClick={() => navigate(item.path)}
+                  badge={item.badge || 0}
                 />
               ))}
             </div>
