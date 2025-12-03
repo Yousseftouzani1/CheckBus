@@ -1,8 +1,13 @@
 package ma.ensias.soa.trajetservice.dto;
 
 
-import lombok.*;
 import java.sql.Time;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
 @Setter
@@ -16,3 +21,4 @@ public class HoraireDTO {
     private Time heureArrivee;
     private String jour;
 }
+ 

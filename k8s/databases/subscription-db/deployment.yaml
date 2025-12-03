@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: subscription-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: subscription-db
+  template:
+    metadata:
+      labels:
+        app: subscription-db
+    spec:
+      containers:
+        - name: subscription-db
+          image: postgres:15
+          env:
+            - name: POSTGRES_DB
+              value: subscription_db
+            - name: POSTGRES_USER
+              value: postgres
+            - name: POSTGRES_PASSWORD
+              value: postgres
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: subscription-db-storage
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: subscription-db-storage
+          persistentVolumeClaim:
+            claimName: subscription-db-pvc

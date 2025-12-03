@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: geoloc-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: geoloc-db
+  template:
+    metadata:
+      labels:
+        app: geoloc-db
+    spec:
+      containers:
+        - name: geoloc-db
+          image: postgres:17
+          env:
+            - name: POSTGRES_DB
+              value: geolocdb
+            - name: POSTGRES_USER
+              value: postgres
+            - name: POSTGRES_PASSWORD
+              value: postgres
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: geoloc-db-storage
+              mountPath: /var/lib/postgresql/data
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "postgres"]
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "postgres"]
+            initialDelaySeconds: 20
+            periodSeconds: 10
+      volumes:
+        - name: geoloc-db-storage
+          persistentVolumeClaim:
+            claimName: geoloc-db-pvc

@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: geoloc-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: geoloc-service
+  template:
+    metadata:
+      labels:
+        app: geoloc-service
+    spec:
+      containers:
+        - name: geoloc-service
+          image: geoloc-service:latest    # LOCAL image via k3d import
+          ports:
+            - containerPort: 8089
+          env:
+
+            # --- Profiles ---
+            - name: SPRING_PROFILES_ACTIVE
+              value: "prod"
+
+            # --- Database ---
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://geoloc-db:5432/geolocdb"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "postgres"
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: "postgres"
+
+            # --- Redis ---
+            - name: SPRING_DATA_REDIS_HOST
+              value: "redis"
+            - name: SPRING_DATA_REDIS_PORT
+              value: "6379"
+
+            # --- Kafka ---
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              value: "kafka:29092"
+
+          # --- Healthcheck (Kubernetes version of docker-compose healthcheck) ---
+          readinessProbe:
+            httpGet:
+              path: /geoloc/actuator/health
+              port: 8089
+            initialDelaySeconds: 15
+            periodSeconds: 10
+
+          livenessProbe:
+            httpGet:
+              path: /geoloc/actuator/health
+              port: 8089
+            initialDelaySeconds: 30
+            periodSeconds: 15

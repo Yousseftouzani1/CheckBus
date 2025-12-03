@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth-service
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      containers:
+        - name: auth-service
+          image: auth-service:latest     # LOCAL image (k3d import)
+          ports:
+            - containerPort: 8084
+          env:
+
+            # --- Database ---
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://auth-db:5432/auth_db"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "postgres"
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: "postgres"
+
+            # --- JWT + MAIL from Secret ---
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: auth-service-secret
+                  key: JWT_SECRET
+
+            - name: MAIL_ADDR
+              valueFrom:
+                secretKeyRef:
+                  name: auth-service-secret
+                  key: MAIL_ADDR
+
+            - name: APP_PSSWRD
+              valueFrom:
+                secretKeyRef:
+                  name: auth-service-secret
+                  key: APP_PSSWRD
+
+            # --- Mail SMTP Configuration ---
+            - name: SPRING_MAIL_HOST
+              value: "smtp.gmail.com"
+            - name: SPRING_MAIL_PORT
+              value: "587"
+            - name: SPRING_MAIL_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: auth-service-secret
+                  key: MAIL_ADDR
+            - name: SPRING_MAIL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: auth-service-secret
+                  key: APP_PSSWRD
+            - name: SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH
+              value: "true"
+            - name: SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE
+              value: "true"
+            - name: SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_REQUIRED
+              value: "true"
