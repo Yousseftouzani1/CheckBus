@@ -468,14 +468,6 @@ if (!ticket) return null;
                 <CreditCard className="w-4 h-4" />
                 <span>Pay Now</span>
               </button>
-
-              <button
-                onClick={() => onUnreserve(ticket)}
-                className="w-full bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-200 font-semibold py-3 rounded-xl border border-yellow-400/30 transition-all duration-300 flex items-center justify-center space-x-2"
-              >
-                <XCircle className="w-4 h-4" />
-                <span>Unreserve Seat</span>
-              </button>
             </>
           )}
 

@@ -293,7 +293,7 @@ useEffect(() => {
   }
 }, [bus]);
 //////////////////////// RESERVE TICKET ///////////////////
-
+ 
 const handleConfirm = async () => {
   if (!selectedSeat) return;
 
@@ -320,6 +320,30 @@ const handleConfirm = async () => {
 
     const data = await response.json();
     console.log("Reservation successful:", data);
+    // 2️⃣ Check if user has an active subscription
+    const subsResponse = await fetch(`http://localhost:8087/api/subscriptions/user/${user.userId}`);
+    const subs = await subsResponse.json();
+
+    const hasActiveSub = Array.isArray(subs) && subs.some(s => s.status === "ACTIVE");
+    console.log("  Active subscription found:", hasActiveSub);
+    // 3️⃣ If has active subscription → auto-buy ticket
+    if (hasActiveSub) {
+      console.log("🎟️ User has an active subscription — auto-processing payment...");
+
+      const buyResponse = await fetch(`http://localhost:8081/api/tickets/${data.id}/buy?method=CARD`, {
+        method: "POST",
+      });
+
+      if (!buyResponse.ok) throw new Error("Auto-payment failed");
+
+      const paymentResult = await buyResponse.json();
+      console.log("💳 Payment processed automatically:", paymentResult);
+
+      alert("✅ Ticket purchased automatically using your active subscription!");
+      navigate("/profile"); // or wherever you want
+      return;
+    }
+
 
     // 🚀 Redirect to payment with ticketId and seat info
     navigate("/payment", {
