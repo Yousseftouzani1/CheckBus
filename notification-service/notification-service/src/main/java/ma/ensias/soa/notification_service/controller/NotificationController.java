@@ -12,6 +12,7 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 
+@CrossOrigin(origins = "http://localhost:3000")
 @RestController
 @RequestMapping("/api/notifications")
 @RequiredArgsConstructor

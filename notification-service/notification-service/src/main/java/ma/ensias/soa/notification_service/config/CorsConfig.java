@@ -11,22 +11,25 @@ public class CorsConfig {
 
     @Bean
     public CorsFilter corsFilter() {
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
         
-        // Allow all origins (completely open)
-        config.addAllowedOriginPattern("*"); // use addAllowedOriginPattern instead of addAllowedOrigin for wildcard
+        // Allow credentials
+        config.setAllowCredentials(true);
         
-        // Allow all headers
+        // Allow ALL origins
+        config.addAllowedOriginPattern("*");
+        
+        // Allow ALL headers
         config.addAllowedHeader("*");
         
-        // Allow all HTTP methods (GET, POST, PUT, DELETE, OPTIONS, etc.)
+        // Allow ALL methods (GET, POST, PUT, DELETE, etc.)
         config.addAllowedMethod("*");
-
-        // Allow credentials (cookies, authorization headers, etc.)
-        config.setAllowCredentials(true);
-
-        // Register configuration for all paths
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        
+        // Expose all headers
+        config.addExposedHeader("*");
+        
+        // Apply to all endpoints
         source.registerCorsConfiguration("/**", config);
         
         return new CorsFilter(source);
