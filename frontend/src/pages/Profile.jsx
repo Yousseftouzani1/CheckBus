@@ -1,6 +1,194 @@
 import React, { useState, useEffect } from 'react';
 import { User, Ticket, CreditCard, Bus, ArrowRight, Trash2, RefreshCw, X, Calendar, MapPin, Clock, Mail, Edit, CheckCircle, AlertCircle, XCircle } from 'lucide-react';
 import { useNavigate } from "react-router-dom";
+import jsPDF from "jspdf";
+import CryptoJS from "crypto-js";
+import { useTrajet } from "../hooks/useTrajet"; // adjust the path
+export const generateTicketPDF = (ticket) => {
+  const doc = new jsPDF();
+
+  // ====== Brand Colors ======
+  const colors = {
+    primary: [37, 99, 235], // Blue
+    accent: [79, 70, 229], // Indigo
+    text: [30, 41, 59], // Slate-800
+    gray: [100, 116, 139], // Slate-500
+    lightGray: [226, 232, 240], // Slate-200
+    background: [248, 250, 252], // Slate-50
+    white: [255, 255, 255],
+  };
+
+  const statusColor =
+    ticket.status === "PAID"
+      ? [22, 163, 74] // Green
+      : ticket.status === "RESERVED"
+      ? [234, 179, 8] // Yellow
+      : [220, 38, 38]; // Red
+
+  // ====== Background ======
+  doc.setFillColor(...colors.background);
+  doc.rect(0, 0, 210, 297, "F");
+
+  // ====== Header ======
+  doc.setFillColor(...colors.primary);
+  doc.rect(0, 0, 210, 25, "F");
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(18);
+  doc.setTextColor(...colors.white);
+  doc.text("TransitGo - Ticket", 105, 17, { align: "center" });
+
+  // ====== Ticket Status ======
+  doc.setFillColor(...statusColor);
+  doc.roundedRect(160, 30, 35, 10, 2, 2, "F");
+  doc.setFontSize(10);
+  doc.setTextColor(...colors.white);
+  doc.text(ticket.status || "UNKNOWN", 177, 37, { align: "center" });
+
+  // ====== Section: Ticket Info ======
+  let y = 50;
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...colors.text);
+  doc.setFontSize(14);
+  doc.text("Ticket Information", 20, y);
+  y += 6;
+  doc.setDrawColor(...colors.lightGray);
+  doc.line(20, y, 190, y);
+  y += 10;
+
+  const info = [
+    ["Ticket ID", `#${ticket.id}`],
+    ["Trip ID", `#${ticket.tripId}`],
+    ["Seat Number", ticket.seatcode || "N/A"],
+    ["Price", `${ticket.price} MAD`],
+    ["Status", ticket.status || "N/A"],
+  ];
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(12);
+  info.forEach(([label, value]) => {
+    doc.setTextColor(...colors.gray);
+    doc.text(label, 25, y);
+    doc.setTextColor(...colors.text);
+    doc.text(value.toString(), 80, y);
+    y += 8;
+  });
+
+  // ====== Section: Booking Details ======
+  y += 10;
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...colors.text);
+  doc.setFontSize(14);
+  doc.text("Booking Details", 20, y);
+  y += 6;
+  doc.setDrawColor(...colors.lightGray);
+  doc.line(20, y, 190, y);
+  y += 10;
+
+  const createdDate = new Date(ticket.createdAt).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+  const createdTime = new Date(ticket.createdAt).toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  const bookingDetails = [
+    ["Booking Date", createdDate],
+    ["Booking Time", createdTime],
+  ];
+
+  if (ticket.reservation_Time) {
+    const reservedUntil = new Date(ticket.reservation_Time).toLocaleString();
+    bookingDetails.push(["Reserved Until", reservedUntil]);
+  }
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(12);
+  bookingDetails.forEach(([label, value]) => {
+    doc.setTextColor(...colors.gray);
+    doc.text(label, 25, y);
+    doc.setTextColor(...colors.text);
+    doc.text(value.toString(), 80, y);
+    y += 8;
+  });
+
+  // ====== Section: Trajet (if available) ======
+  if (ticket.depart || ticket.arrivee) {
+    y += 10;
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...colors.text);
+    doc.setFontSize(14);
+    doc.text("Journey Details", 20, y);
+    y += 6;
+    doc.setDrawColor(...colors.lightGray);
+    doc.line(20, y, 190, y);
+    y += 10;
+
+    const trajetInfo = [
+      ["Departure", ticket.depart || "Unknown"],
+      ["Arrival", ticket.arrivee || "Unknown"],
+      ["Stops", (ticket.arrets || []).join(", ") || "None"],
+    ];
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(12);
+    trajetInfo.forEach(([label, value]) => {
+      doc.setTextColor(...colors.gray);
+      doc.text(label, 25, y);
+      doc.setTextColor(...colors.text);
+      doc.text(value.toString(), 80, y, { maxWidth: 110 });
+      y += 8;
+    });
+  }
+
+  // ====== Footer ======
+  y = 275;
+  doc.setDrawColor(...colors.lightGray);
+  doc.line(20, y, 190, y);
+  doc.setTextColor(...colors.gray);
+  doc.setFontSize(10);
+  doc.text("Thank you for traveling with TransitGo!", 105, y + 6, {
+    align: "center",
+  });
+  doc.text(
+    `Generated on ${new Date().toLocaleDateString()}`,
+    105,
+    y + 12,
+    { align: "center" }
+  );
+// ======= Generate a unique signature =======
+const secret = "TransitGoSecretKey2025"; // keep same on backend if verifying
+const dataString = `${ticket.id}-${ticket.tripId}-${ticket.userId || "?"}-${ticket.createdAt}-${ticket.price}`;
+const hash = CryptoJS.HmacSHA256(dataString, secret).toString(CryptoJS.enc.Hex);
+const signature = hash.substring(0, 16).toUpperCase(); // shorten for readability
+//=====================
+// ======= UNIQUE SIGNATURE =======
+const yFooter = 260;
+doc.setDrawColor(...colors.lightGray);
+doc.line(20, yFooter, 190, yFooter);
+
+doc.setFontSize(9);
+doc.setTextColor(...colors.gray);
+doc.text("Verification Signature:", 25, yFooter + 8);
+doc.setFont("helvetica", "bold");
+doc.setTextColor(...colors.primary);
+doc.text(signature, 70, yFooter + 8);
+
+doc.setFont("helvetica", "italic");
+doc.setTextColor(...colors.gray);
+doc.text(
+  "Verify this code on TransitGo's website to confirm authenticity.",
+  25,
+  yFooter + 14
+);
+
+  // ====== Save PDF ======
+  doc.save(`TransitGo_Ticket_${ticket.id}.pdf`);
+};
+
 
 // ============= JWT HELPER FUNCTIONS =============
 const getCookie = (name) => {
@@ -101,8 +289,30 @@ const MOCK_SUBSCRIPTIONS = [
 
 // ============= TICKET DETAILS MODAL =============
 function TicketDetailsModal({ ticket, onClose, onModify, onRefund, onPay, onUnreserve }) {
-  if (!ticket) return null;
+  
+  const [trajet, setTrajet] = React.useState(null);
+  const [loadingTrajet, setLoadingTrajet] = React.useState(true);
 
+// ✅ Fetch trajet details when the modal opens
+    React.useEffect(() => {
+      const fetchTrajet = async () => {
+    if (!ticket?.tripId) return;
+    try {
+      const response = await fetch(`http://localhost:8083/api/trajets/${ticket.tripId}`);
+      if (!response.ok) throw new Error("Failed to fetch trajet");
+      const data = await response.json();
+      setTrajet(data);
+    } catch (err) {
+      console.error("❌ Error fetching trajet:", err);
+      setTrajet(null);
+    } finally {
+      setLoadingTrajet(false);
+    }
+  };
+
+  fetchTrajet();
+}, [ticket.tripId]);
+if (!ticket) return null;
   const formatDate = (timestamp) => {
     if (!timestamp) return 'N/A';
     const date = new Date(timestamp);
@@ -140,10 +350,44 @@ function TicketDetailsModal({ ticket, onClose, onModify, onRefund, onPay, onUnre
         {/* Details */}
         <div className="space-y-4 mb-6">
           <div className="bg-white/5 rounded-xl p-4">
-            <div className="flex items-center space-x-3 mb-3">
-              <Bus className="w-5 h-5 text-blue-300" />
-              <span className="text-white font-semibold">Trip #{ticket.tripId}</span>
-            </div>
+<div className="flex items-start space-x-3 mb-3">
+  <Bus className="w-5 h-5 text-blue-300 mt-1" />
+  <div className="text-white">
+    <div className="font-semibold text-lg">Trip #{ticket.tripId}</div>
+
+    {/* ✅ Loading or error state */}
+    {loadingTrajet ? (
+      <div className="text-blue-200 text-xs mt-1">Loading trip details...</div>
+    ) : trajet ? (
+      <>
+        {/* ✅ Trajet route */}
+        <div className="text-blue-200 text-sm mt-1">
+          {trajet.depart} → {trajet.arrivee}
+        </div>
+
+        {/* ✅ Stops (arrets) */}
+        {trajet.arrets?.length > 0 && (
+          <div className="mt-1 text-blue-100 text-xs">
+            <span className="font-semibold text-blue-300">Stops:</span>{" "}
+            {trajet.arrets.join(" • ")}
+          </div>
+        )}
+
+        {/* ✅ Optional: Line code and distance */}
+        <div className="text-blue-300 text-xs mt-1">
+          {trajet.ligneCode && (
+            <span className="mr-2">Line: {trajet.ligneCode}</span>
+          )}
+          {trajet.distanceKm && (
+            <span>Distance: {trajet.distanceKm} km</span>
+          )}
+        </div>
+      </>
+    ) : (
+      <div className="text-red-300 text-xs mt-1">Trip details unavailable</div>
+    )}
+  </div>
+</div>
 
             <div className="space-y-3">
               <div className="flex items-center justify-between">
@@ -349,24 +593,33 @@ function TicketCard({ ticket, onViewDetails, onRefund, onPay, onUnreserve }) {
             Details
           </button>
 
-          {/* RESERVED ONLY BUTTONS */}
-          {ticket.status === "RESERVED" && (
-            <>
-              <button
-                onClick={() => navigate('/payment', { state: { ticketId } })}
-                className="px-3 py-2 bg-blue-500/30 hover:bg-blue-500/50 text-white text-sm rounded-lg transition-all duration-300"
-              >
-                Pay
-              </button>
+{/* Always show Download PDF */}
+{ticket.status === "RESERVED" ? (
+  <>
+    <button
+      onClick={() => navigate('/payment', { state: { ticketId } })}
+      className="px-3 py-2 bg-blue-500/30 hover:bg-blue-500/50 text-white text-sm rounded-lg transition-all duration-300"
+    >
+      Pay
+    </button>
 
-              <button
-                onClick={() => onUnreserve(ticket)}
-                className="px-3 py-2 bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-200 text-sm rounded-lg transition-all duration-300"
-              >
-                Unreserve
-              </button>
-            </>
-          )}
+    <button
+      onClick={() => generateTicketPDF(ticket)}
+      className="px-3 py-2 bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-200 text-sm rounded-lg transition-all duration-300"
+    >
+      Download PDF
+    </button>
+  </>
+) : (
+  // ✅ For PAID or other statuses, show only the Download PDF button
+  <button
+    onClick={() => generateTicketPDF(ticket)}
+    className="px-3 py-2 bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-200 text-sm rounded-lg transition-all duration-300"
+  >
+    Download PDF
+  </button>
+)}
+
 
           {/* Refund */}
           {(ticket.status !== "CANCELLED" && ticket.status !== "RESERVED") && (
@@ -413,6 +666,17 @@ function TicketList({ tickets, onViewDetails, onRefund, onPay, onUnreserve }) {
   );
 }
 
+const formatDate = (dateString) => {
+  if (!dateString) return "N/A";
+  const date = new Date(dateString);
+  return date.toLocaleString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+};
 
 // ============= SUBSCRIPTION CARD =============
 function SubscriptionCard({ subscription, onCancel }) {
@@ -423,11 +687,11 @@ function SubscriptionCard({ subscription, onCancel }) {
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-3">
-          <div className={`w-12 h-12 bg-gradient-to-br ${subscription.gradient} rounded-xl flex items-center justify-center shadow-lg`}>
+          <div className={`w-12 h-12 bg-gradient-to-br ${subscription.startDate} rounded-xl flex items-center justify-center shadow-lg`}>
             <CreditCard className="w-6 h-6 text-white" strokeWidth={2.5} />
           </div>
           <div>
-            <div className="text-white font-bold text-lg">{subscription.type}</div>
+            <div className="text-white font-bold text-lg">{subscription.planType}</div>
             <div className="text-blue-200 text-xs">{subscription.price} MAD</div>
           </div>
         </div>
@@ -443,7 +707,7 @@ function SubscriptionCard({ subscription, onCancel }) {
 
       {/* Perks */}
       <div className="mb-4 space-y-2">
-        {subscription.perks.map((perk, index) => (
+        {(subscription.perks || []).map((perk, index) => (
           <div key={index} className="flex items-center space-x-2 text-blue-100 text-sm">
             <CheckCircle className="w-4 h-4 text-green-400" />
             <span>{perk}</span>
@@ -458,7 +722,8 @@ function SubscriptionCard({ subscription, onCancel }) {
           <span className="text-blue-200">
             {isActive ? 'Renews on' : 'Expired on'}:
           </span>
-          <span className="text-white font-semibold ml-2">{subscription.renewsOn}</span>
+          <span className="text-white font-semibold ml-2">{formatDate(subscription.endDate)}</span>
+          
         </div>
       </div>
 
@@ -546,9 +811,10 @@ export default function Profile() {
   const [user, setUser] = useState(null);
   const [tickets, setTickets] = useState([]);
   const [loadingTickets, setLoadingTickets] = useState(true);
-  const [subscriptions] = useState(MOCK_SUBSCRIPTIONS);
-  const [selectedTicket, setSelectedTicket] = useState(null);
-
+// ✅ Subscriptions state
+const [subscriptions, setSubscriptions] = useState([]);
+const [loadingSubs, setLoadingSubs] = useState(true);
+const [selectedTicket, setSelectedTicket] = useState(null);
   useEffect(() => {
     const userData = getUserFromToken();
     
@@ -561,6 +827,36 @@ export default function Profile() {
     
     setUser(userData);
     console.log('User loaded from JWT:', userData);
+
+// ✅ Fetch subscriptions for the logged-in user
+const loadSubscriptions = async () => {
+  try {
+    setLoadingSubs(true);
+    const response = await fetch(`http://localhost:8087/api/subscriptions/user/${userData.userId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch subscriptions: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log("✅ Subscriptions loaded:", data);
+    setSubscriptions(data);
+  } catch (error) {
+    console.error("❌ Error fetching subscriptions:", error);
+    setSubscriptions([]);
+  } finally {
+    setLoadingSubs(false);
+  }
+};
+
+// Call it right after defining
+loadSubscriptions();
 
     // Fetch user tickets
     const loadTickets = async () => {
@@ -582,7 +878,7 @@ export default function Profile() {
     setSelectedTicket(null);
   };
 
- const handleRefundTicket = async (ticket) => {
+const handleRefundTicket = async (ticket) => {
   console.log('Requesting refund for ticket:', ticket);
 
   try {
@@ -609,7 +905,7 @@ export default function Profile() {
 };
 
 
-  const handleModifyTicket = (ticket) => {
+const handleModifyTicket = (ticket) => {
     console.log('Modifying ticket:', ticket);
     // TODO: Navigate to ticket modification page
     // navigate(`/tickets/${ticket.id}/modify`);
@@ -617,18 +913,45 @@ export default function Profile() {
     navigate(`/tickets/${ticket.id}/modify`, { state: { ticket } });
   };
 
-  const handleCancelSubscription = (subscription) => {
-    console.log('Cancelling subscription:', subscription);
-    // TODO: Send cancellation request
-    // POST /api/subscriptions/{subscription.id}/cancel
-    const userConfirmed = window.confirm(
-      `Are you sure you want to cancel your ${subscription.type}?`
+const handleCancelSubscription = async (subscription) => {
+  console.log("Cancelling subscription:", subscription);
+
+  // 🧭 Step 1. Ask for confirmation (modern alert)
+  const userConfirmed = window.confirm(
+    `Are you sure you want to cancel your ${subscription.planType || subscription.type} subscription?`
+  );
+
+  if (!userConfirmed) return;
+
+  try {
+    // 📨 Step 2. Send POST request to backend
+    const response = await fetch("http://localhost:8087/api/subscriptions/cancel-subscription", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(subscription.id), // backend expects just the ID
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to cancel subscription (${response.status})`);
+    }
+
+    const updatedSubscription = await response.json();
+
+    // ✅ Step 3. Update local state immediately
+    setSubscriptions((prev) =>
+      prev.map((s) => (s.id === updatedSubscription.id ? updatedSubscription : s))
     );
 
-    if (userConfirmed) {
-      alert(`${subscription.type} cancelled successfully`);
-    }
-  };
+    // ✅ Step 4. Feedback to the user
+    alert(`${subscription.planType || subscription.type} subscription cancelled successfully.`);
+  } catch (error) {
+    console.error("Error cancelling subscription:", error);
+    alert("Failed to cancel subscription. Please try again later.");
+  }
+};
+
 
   // Show loading state while checking authentication
   if (!user || loadingTickets) {
@@ -693,20 +1016,26 @@ export default function Profile() {
             />
           </div>
 
-          {/* Subscriptions Section */}
-          <div>
-            <div className="flex items-center space-x-3 mb-6">
-              <CreditCard className="w-6 h-6 text-blue-200" />
-              <h3 className="text-2xl font-bold text-white">My Subscriptions</h3>
-              <span className="px-3 py-1 bg-purple-500/20 text-purple-200 rounded-full text-sm font-semibold">
-                {subscriptions.filter(s => s.status === "ACTIVE").length} Active
-              </span>
-            </div>
-            <SubscriptionList
-              subscriptions={subscriptions}
-              onCancel={handleCancelSubscription}
-            />
-          </div>
+        {/* Subscriptions Section */}
+  <div>
+  <div className="flex items-center space-x-3 mb-6">
+    <CreditCard className="w-6 h-6 text-blue-200" />
+    <h3 className="text-2xl font-bold text-white">My Subscriptions</h3>
+    <span className="px-3 py-1 bg-purple-500/20 text-purple-200 rounded-full text-sm font-semibold">
+      {subscriptions.filter(s => s.status === "ACTIVE").length} Active
+    </span>
+  </div>
+
+  {loadingSubs ? (
+    <div className="text-center text-blue-200">Loading your subscriptions...</div>
+  ) : (
+    <SubscriptionList
+      subscriptions={subscriptions}
+      onCancel={handleCancelSubscription}
+    />
+  )}
+  </div>
+
         </div>
       </div>
 

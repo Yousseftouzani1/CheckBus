@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: geoloc-service
+spec:
+  selector:
+    app: geoloc-service
+  ports:
+    - port: 8089
+      targetPort: 8089
+  type: ClusterIP

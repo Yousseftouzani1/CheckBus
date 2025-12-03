@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trajet-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: trajet-service
+  template:
+    metadata:
+      labels:
+        app: trajet-service
+    spec:
+      containers:
+        - name: trajet-service
+          image: trajet-service:latest
+          ports:
+            - containerPort: 8083
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "docker"
+
+            # --- Database ---
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://trajet-db:5432/trajet_db"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "postgres"
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: "postgres"
+
+            # --- JPA ---
+            - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+              value: "update"
+
+            # --- Kafka ---
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              value: "kafka:29092"
