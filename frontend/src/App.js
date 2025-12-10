@@ -14,6 +14,9 @@ import Register from "./pages/Register";
 import MapPage from "./pages/MapPage";
 import PaymentsDashboard from "./pages/PaymentsDashboard";
 import Notifications from "./pages/Notifications";
+import AdminTrajet from "./pages/AdminTrajet";
+import AdminPayment from "./pages/AdminPayment";
+
 
 
 // ======================================================
@@ -63,6 +66,7 @@ const getUserFromToken = () => {
     name: payload.name || payload.username || payload.sub || "User",
     email: payload.email || "no-email@example.com",
     userId: payload.userId || payload.id || payload.sub || null,
+    role: payload.role || payload.roles || "USER", 
     memberSince: payload.iat
       ? new Date(payload.iat * 1000).toLocaleDateString("en-US", {
           month: "long",
@@ -95,7 +99,7 @@ function App() {
           </>
         )}
 
-        {user && (
+        {user && user.role === "USER" && (
           <>
             <Route path="/" element={<Menu />} />
             <Route path="/buy-ticket" element={<BuyTicket />} />
@@ -108,6 +112,13 @@ function App() {
             <Route path="/map" element={<MapPage />} />
             <Route path="/payments" element={<PaymentsDashboard />} />
             <Route path="/notifications" element={<Notifications />} />
+          </>
+        )}
+
+        {user && user.role === "ADMIN" && (
+          <>
+            <Route path="/" element={<AdminTrajet />} />
+            <Route path="/adminpayment" element={<AdminPayment />} />
           </>
         )}
       </Routes>
